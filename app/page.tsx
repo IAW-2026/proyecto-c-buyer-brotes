@@ -1,5 +1,6 @@
 import { getVendedores } from './lib/api'
 import Link from 'next/link'
+import Buscador from './components/Buscador'
 
 export default async function Home() {
   const vendedores = await getVendedores()
@@ -17,14 +18,7 @@ export default async function Home() {
         </p>
 
         {/* Buscador */}
-        <div className="max-w-xl mx-auto">
-          <input
-            type="text"
-            placeholder="Buscá vendedores o plantas..."
-            className="w-full px-6 py-3 rounded-full border-2 text-lg outline-none"
-            style={{ borderColor: '#7BA05D', backgroundColor: 'white', color: '#243B27' }}
-          />
-        </div>
+        <Buscador vendedores={vendedores} />
       </section>
 
       {/* Catálogo de vendedores */}
