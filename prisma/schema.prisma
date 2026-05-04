@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Buyer {
+  id            Int     @id @default(autoincrement())
+  clerk_user_id String  @unique
+  nombre        String
+  email         String
+  direccion     String?
+  cart          Cart?
+  orders        Order[]
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  estado    String     @default("active")
+  seller_id Int?
+  buyer_id  Int        @unique
+  buyer     Buyer      @relation(fields: [buyer_id], references: [id])
+  items     CartItem[]
+}
+
+model CartItem {
+  id              Int     @id @default(autoincrement())
+  product_id      Int
+  cantidad        Int
+  precio_unitario Decimal
+  cart_id         Int
+  cart            Cart    @relation(fields: [cart_id], references: [id])
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  seller_id  Int
+  total      Decimal
+  estado     String      @default("pending")
+  payment_id Int?
+  created_at DateTime    @default(now())
+  buyer_id   Int
+  buyer      Buyer       @relation(fields: [buyer_id], references: [id])
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id                    Int     @id @default(autoincrement())
+  product_id            Int
+  product_name_snapshot String
+  unit_price_snapshot   Decimal
+  cantidad              Int
+  order_id              Int
+  order                 Order   @relation(fields: [order_id], references: [id])
+}
