@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Navbar from './components/Navbar'
+import Sidebar from './components/Sidebar'
 
 export const metadata: Metadata = {
   title: 'Brotes',
@@ -16,7 +17,12 @@ export default function RootLayout({
     <html lang="es">
       <body>
         <Navbar />
-        {children}
+        <div className="flex">
+          <Sidebar />
+          <div className="flex-1">
+            {children}
+          </div>
+        </div>
       </body>
     </html>
   )

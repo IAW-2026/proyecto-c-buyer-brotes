@@ -1,5 +1,7 @@
 import { getVendedorById } from '../../lib/api'
+import { prisma } from '../../lib/prisma'
 import BotonCarrito from '../../components/BotonCarrito'
+import BotonFavorito from '../../components/BotonFavorito'
 import Link from 'next/link'
 
 type Props = {
@@ -9,6 +11,10 @@ type Props = {
 export default async function VendedorPage({ params }: Props) {
   const { id } = await params
   const vendedor = await getVendedorById(Number(id))
+
+  const favoritos = await prisma.favorite.findMany({
+    where: { buyer_id: 1 }
+  })
 
   if (!vendedor) {
     return (
@@ -57,10 +63,16 @@ export default async function VendedorPage({ params }: Props) {
             >
               {/* Imagen del producto */}
               <div
-                className="h-36 flex items-center justify-center text-6xl"
+                className="h-36 flex items-center justify-center text-6xl relative"
                 style={{ backgroundColor: '#EAF3E6' }}
               >
                 {producto.imagen}
+                <BotonFavorito
+                  productoId={producto.id}
+                  sellerId={vendedor.id}
+                  buyerId={1}
+                  esFavorito={favoritos.some(f => f.product_id === producto.id)}
+                />
               </div>
 
               {/* Info del producto */}

@@ -15,6 +15,7 @@ model Buyer {
   direccion     String?
   cart          Cart?
   orders        Order[]
+  favorites     Favorite[]
 }
 
 model Cart {
@@ -55,4 +56,16 @@ model OrderItem {
   cantidad              Int
   order_id              Int
   order                 Order   @relation(fields: [order_id], references: [id])
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  buyer_id   Int
+  product_id Int
+  seller_id  Int
+  created_at DateTime @default(now())
+
+  buyer Buyer @relation(fields: [buyer_id], references: [id])
+
+  @@unique([buyer_id, product_id])
 }
