@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma'
 import Link from 'next/link'
 import BotonVaciarCarrito from '../components/BotonVaciarCarrito'
+import { ShoppingCart, Leaf } from 'lucide-react'
 
 export default async function CarritoPage() {
   const cart = await prisma.cart.findFirst({
@@ -24,20 +25,20 @@ export default async function CarritoPage() {
           ← Volver al inicio
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8" style={{ color: '#243B27' }}>
-          Mi carrito 🛒
+        <h1 className="text-4xl font-bold mb-8 flex items-center gap-2" style={{ color: '#243B27' }}>
+          <ShoppingCart size={32} /> Mi carrito
         </h1>
 
         {!cart || cart.items.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-6xl mb-4">🪴</p>
+            <Leaf size={80} className="mx-auto mb-4" style={{ color: '#7BA05D' }} />
             <p className="text-xl mb-6" style={{ color: '#4C6B3D' }}>
               Tu carrito está vacío
             </p>
             <Link
               href="/"
-              className="px-8 py-3 rounded-full text-white font-semibold"
-              style={{ backgroundColor: '#7BA05D' }}
+              className="px-8 py-3 rounded-full text-white font-semibold transition-all hover:brightness-110"
+              style={{ backgroundColor: '#4C6B3D' }}
             >
               Explorar vendedores
             </Link>

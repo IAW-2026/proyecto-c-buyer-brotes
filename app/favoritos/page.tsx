@@ -24,20 +24,20 @@ export default async function FavoritosPage() {
           ← Volver al inicio
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8" style={{ color: '#243B27' }}>
+        <h1 className="text-4xl font-bold mb-8" style={{ color: '#243B27' }}>
           Mis favoritos
         </h1>
 
         {items.length === 0 ? (
           <div className="text-center py-20">
-            <Heart size={64} className="mx-auto mb-4" style={{ color: '#B9B9B0' }} />
-            <p className="text-xl mb-6" style={{ color: '#4C6B3D' }}>
+            <Heart size={64} className="mx-auto mb-4" style={{ color: '#7BA05D' }} />
+            <p className="text-lg mb-6" style={{ color: '#4C6B3D' }}>
               Todavía no tenés favoritos
             </p>
             <Link
               href="/"
-              className="px-8 py-3 rounded-full text-white font-semibold"
-              style={{ backgroundColor: '#7BA05D' }}
+              className="px-8 py-3 rounded-full text-white font-semibold transition-all hover:brightness-110"
+              style={{ backgroundColor: '#4C6B3D' }}
             >
               Explorar vendedores
             </Link>
