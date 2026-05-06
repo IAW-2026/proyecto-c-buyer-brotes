@@ -1,13 +1,14 @@
 import { prisma } from '../lib/prisma'
 import { getVendedorById } from '../lib/api'
+import ImagenPlaceholder from '../components/ImagenPlaceholder'
 import Link from 'next/link'
+import { Heart } from 'lucide-react'
 
 export default async function FavoritosPage() {
   const favoritos = await prisma.favorite.findMany({
     where: { buyer_id: 1 }
   })
 
-  // Para cada favorito obtenemos el producto y vendedor del mock
   const items = await Promise.all(
     favoritos.map(async (fav) => {
       const vendedor = await getVendedorById(fav.seller_id)
@@ -24,12 +25,12 @@ export default async function FavoritosPage() {
         </Link>
 
         <h1 className="text-3xl font-bold mb-8" style={{ color: '#243B27' }}>
-          Mis favoritos ❤️
+          Mis favoritos
         </h1>
 
         {items.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-6xl mb-4">🤍</p>
+            <Heart size={64} className="mx-auto mb-4" style={{ color: '#B9B9B0' }} />
             <p className="text-xl mb-6" style={{ color: '#4C6B3D' }}>
               Todavía no tenés favoritos
             </p>
@@ -51,20 +52,18 @@ export default async function FavoritosPage() {
                   className="rounded-2xl overflow-hidden shadow-md"
                   style={{ backgroundColor: 'white' }}
                 >
-                  {/* Imagen */}
                   <div
-                    className="h-36 flex items-center justify-center text-6xl"
+                    className="h-36 flex items-center justify-center"
                     style={{ backgroundColor: '#EAF3E6' }}
                   >
-                    {producto.imagen}
+                    <ImagenPlaceholder tipo="producto" imagen={producto.imagen} />
                   </div>
 
-                  {/* Info */}
                   <div className="p-4">
                     <h3 className="text-lg font-bold mb-1" style={{ color: '#243B27' }}>
                       {producto.nombre}
                     </h3>
-                    <p className="text-sm mb-1" style={{ color: '#7BA05D' }}>
+                    <p className="text-sm mb-1 flex items-center gap-1" style={{ color: '#7BA05D' }}>
                       🏪 {vendedor.nombre}
                     </p>
                     <p className="text-sm mb-3" style={{ color: '#4C6B3D' }}>

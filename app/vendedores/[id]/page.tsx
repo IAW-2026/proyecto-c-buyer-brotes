@@ -68,7 +68,6 @@ export default async function VendedorPage({ params }: Props) {
                 style={{ backgroundColor: '#EAF3E6' }}
               >
                 <ImagenPlaceholder tipo="producto" imagen={producto.imagen} />
-                {producto.imagen}
                 <BotonFavorito
                   productoId={producto.id}
                   sellerId={vendedor.id}
