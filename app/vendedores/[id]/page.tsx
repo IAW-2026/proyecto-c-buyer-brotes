@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma'
 import BotonCarrito from '../../components/BotonCarrito'
 import BotonFavorito from '../../components/BotonFavorito'
 import Link from 'next/link'
+import ImagenPlaceholder from '../../components/ImagenPlaceholder'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -63,9 +64,10 @@ export default async function VendedorPage({ params }: Props) {
             >
               {/* Imagen del producto */}
               <div
-                className="h-36 flex items-center justify-center text-6xl relative"
+                className="h-36 flex items-center justify-center relative"
                 style={{ backgroundColor: '#EAF3E6' }}
               >
+                <ImagenPlaceholder tipo="producto" imagen={producto.imagen} />
                 {producto.imagen}
                 <BotonFavorito
                   productoId={producto.id}

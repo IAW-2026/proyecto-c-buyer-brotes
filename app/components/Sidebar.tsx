@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Home, Leaf, Heart, Package, Bell, User } from 'lucide-react'
 
 export default function Sidebar() {
   return (
@@ -13,42 +14,42 @@ export default function Sidebar() {
           className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold"
           style={{ backgroundColor: '#EAF3E6', color: '#4C6B3D' }}
         >
-          🏠 Inicio
+          <Home size={18} /> Inicio
         </Link>
         <Link
           href="/"
           className="flex items-center gap-3 px-4 py-3 rounded-xl"
           style={{ color: '#4C6B3D' }}
         >
-          🌿 Explorar plantas
+          <Leaf size={18} /> Explorar plantas
         </Link>
         <Link
           href="/favoritos"
           className="flex items-center gap-3 px-4 py-3 rounded-xl"
           style={{ color: '#4C6B3D' }}
         >
-          🤍 Favoritos
+          <Heart size={18} /> Favoritos
+        </Link>
+        <Link
+          href="/pedidos"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{ color: '#4C6B3D' }}
+        >
+          <Package size={18} /> Mis pedidos
         </Link>
         <Link
           href="/"
           className="flex items-center gap-3 px-4 py-3 rounded-xl"
           style={{ color: '#4C6B3D' }}
         >
-          📦 Mis pedidos
+          <Bell size={18} /> Notificaciones
         </Link>
         <Link
           href="/"
           className="flex items-center gap-3 px-4 py-3 rounded-xl"
           style={{ color: '#4C6B3D' }}
         >
-          🔔 Notificaciones
-        </Link>
-        <Link
-          href="/"
-          className="flex items-center gap-3 px-4 py-3 rounded-xl"
-          style={{ color: '#4C6B3D' }}
-        >
-          👤 Perfil
+          <User size={18} /> Perfil
         </Link>
       </div>
 
@@ -57,7 +58,7 @@ export default function Sidebar() {
         className="rounded-2xl p-4 text-center"
         style={{ backgroundColor: '#EAF3E6' }}
       >
-        <p className="text-2xl mb-2">🌱</p>
+        <Leaf size={32} className="mx-auto mb-2" style={{ color: '#4C6B3D' }} />
         <p className="font-bold text-sm mb-1" style={{ color: '#243B27' }}>
           Dale vida a tu hogar
         </p>

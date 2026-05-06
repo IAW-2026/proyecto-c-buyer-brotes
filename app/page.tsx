@@ -1,6 +1,8 @@
 import { getVendedores } from './lib/api'
 import Link from 'next/link'
 import Buscador from './components/Buscador'
+import { MapPin } from 'lucide-react'
+import ImagenPlaceholder from './components/ImagenPlaceholder'
 
 export default async function Home() {
   const vendedores = await getVendedores()
@@ -16,8 +18,6 @@ export default async function Home() {
         <p className="text-xl mb-8" style={{ color: '#4C6B3D' }}>
           Encontrá plantas y accesorios de jardinería de los mejores vendedores
         </p>
-
-        {/* Buscador */}
         <Buscador vendedores={vendedores} />
       </section>
 
@@ -36,10 +36,10 @@ export default async function Home() {
             >
               {/* Imagen del vendedor */}
               <div
-                className="h-40 flex items-center justify-center text-7xl"
+                className="h-40 flex items-center justify-center"
                 style={{ backgroundColor: '#EAF3E6' }}
               >
-                {vendedor.imagen}
+                <ImagenPlaceholder tipo="vendedor" imagen={vendedor.imagen} />
               </div>
 
               {/* Info del vendedor */}
@@ -47,8 +47,8 @@ export default async function Home() {
                 <h3 className="text-lg font-bold mb-1" style={{ color: '#243B27' }}>
                   {vendedor.nombre}
                 </h3>
-                <p className="text-sm mb-2" style={{ color: '#7BA05D' }}>
-                  📍 {vendedor.ubicacion}
+                <p className="text-sm mb-2 flex items-center gap-1" style={{ color: '#7BA05D' }}>
+                  <MapPin size={13} /> {vendedor.ubicacion}
                 </p>
                 <p className="text-sm mb-4" style={{ color: '#4C6B3D' }}>
                   {vendedor.descripcion}
