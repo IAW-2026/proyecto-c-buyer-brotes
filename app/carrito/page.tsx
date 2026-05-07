@@ -1,7 +1,16 @@
 import { prisma } from '../lib/prisma'
 import Link from 'next/link'
-import BotonVaciarCarrito from '../components/BotonVaciarCarrito'
-import { ShoppingCart, Leaf } from 'lucide-react'
+import CartDetails from './CartDetails'
+import { vendedores } from '../lib/mock-data'
+import { ShoppingCart, Leaf, Truck } from 'lucide-react'
+
+function getProductName(productId: number) {
+  const product = vendedores
+    .flatMap(vendor => vendor.productos)
+    .find(producto => producto.id === productId)
+
+  return product?.nombre ?? null
+}
 
 export default async function CarritoPage() {
   const cart = await prisma.cart.findFirst({
@@ -14,80 +23,34 @@ export default async function CarritoPage() {
     }
   })
 
-  const total = cart?.items.reduce((acc, item) => {
-    return acc + Number(item.precio_unitario) * item.cantidad
-  }, 0) ?? 0
+  const cartData = cart
+    ? {
+        ...cart,
+        items: cart.items.map(item => ({
+          ...item,
+          precio_unitario: Number(item.precio_unitario),
+          product_name: getProductName(item.product_id)
+        }))
+      }
+    : null
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#F5F2EA' }}>
-      <section className="px-8 py-10 max-w-3xl mx-auto">
+      <section className="px-4 sm:px-8 py-10 max-w-5xl mx-auto">
         <Link href="/" className="text-sm mb-6 inline-block" style={{ color: '#7BA05D' }}>
-          ← Volver al inicio
+          {'<'} Volver al inicio
         </Link>
 
-        <h1 className="text-4xl font-bold mb-8 flex items-center gap-2" style={{ color: '#243B27' }}>
-          <ShoppingCart size={32} /> Mi carrito
-        </h1>
-
-        {!cart || cart.items.length === 0 ? (
-          <div className="text-center py-20">
-            <Leaf size={80} className="mx-auto mb-4" style={{ color: '#7BA05D' }} />
-            <p className="text-xl mb-6" style={{ color: '#4C6B3D' }}>
-              Tu carrito está vacío
-            </p>
-            <Link
-              href="/"
-              className="px-8 py-3 rounded-full text-white font-semibold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#4C6B3D' }}
-            >
-              Explorar vendedores
-            </Link>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-4xl font-bold flex items-center gap-3" style={{ color: '#243B27' }}>
+            <ShoppingCart size={32} /> Mi carrito
+          </h1>
+          <div className="inline-flex items-center rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
+            <Truck size={16} className="mr-2" /> Envío estimado disponible
           </div>
-        ) : (
-          <div>
-            {/* Lista de items */}
-            <div className="rounded-2xl overflow-hidden shadow-md mb-6" style={{ backgroundColor: 'white' }}>
-              {cart.items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center justify-between px-6 py-4 ${index !== cart.items.length - 1 ? 'border-b' : ''}`}
-                  style={{ borderColor: '#EAF3E6' }}
-                >
-                  <div>
-                    <p className="font-semibold" style={{ color: '#243B27' }}>
-                      Producto #{item.product_id}
-                    </p>
-                    <p className="text-sm" style={{ color: '#7BA05D' }}>
-                      Cantidad: {item.cantidad}
-                    </p>
-                  </div>
-                  <p className="font-bold" style={{ color: '#4C6B3D' }}>
-                    ${(Number(item.precio_unitario) * item.cantidad).toLocaleString('es-AR')}
-                  </p>
-                </div>
-              ))}
-            </div>
+        </div>
 
-            {/* Total */}
-            <div className="rounded-2xl px-6 py-4 mb-6 flex justify-between items-center" style={{ backgroundColor: '#EAF3E6' }}>
-              <span className="text-xl font-bold" style={{ color: '#243B27' }}>Total</span>
-              <span className="text-2xl font-bold" style={{ color: '#4C6B3D' }}>
-                ${total.toLocaleString('es-AR')}
-              </span>
-            </div>
-
-            {/* Botón confirmar */}
-            <button
-              className="w-full py-4 rounded-full text-white font-bold text-lg"
-              style={{ backgroundColor: '#7BA05D' }}
-            >
-              Confirmar compra
-            </button>
-
-            {/* Botón vaciar */}
-            <BotonVaciarCarrito cartId={cart.id} />
-          </div>
-        )}
+        <CartDetails initialCart={cartData} />
       </section>
     </main>
   )

@@ -1,5 +1,13 @@
 import { prisma } from '../../lib/prisma'
+import { vendedores } from '../../lib/mock-data'
 import { NextRequest, NextResponse } from 'next/server'
+
+function getSellerIdFromProduct(product_id: number) {
+  const seller = vendedores.find((vendedor) =>
+    vendedor.productos.some((producto) => producto.id === Number(product_id))
+  )
+  return seller?.id ?? null
+}
 
 async function getOrCreateBuyer(buyer_id: number) {
   let buyer = await prisma.buyer.findUnique({
@@ -49,36 +57,76 @@ export async function POST(request: NextRequest) {
     include: { items: true }
   })
 
-  // Si tiene carrito de otro vendedor, error
-  if (cart && cart.seller_id && cart.seller_id !== Number(seller_id)) {
-    return NextResponse.json(
-      { error: 'Ya tenés productos de otro vendedor en el carrito' },
-      { status: 409 }
-    )
+  if (!cart) {
+    cart = await prisma.cart.findFirst({
+      where: { buyer_id: Number(buyer_id) },
+      include: { items: true }
+    })
   }
 
-  // Si no hay carrito activo, busca uno abandonado y lo reactiva
-  if (!cart) {
-    const cartExistente = await prisma.cart.findFirst({
-      where: { buyer_id: Number(buyer_id) }
-    })
+  const sellerIdNumber = Number(seller_id)
 
-    if (cartExistente) {
-      cart = await prisma.cart.update({
-        where: { id: cartExistente.id },
-        data: { estado: 'active', seller_id: Number(seller_id) },
-        include: { items: true }
-      })
+  if (cart) {
+    if (cart.items.length === 0) {
+      if (cart.seller_id !== sellerIdNumber) {
+        cart = await prisma.cart.update({
+          where: { id: cart.id },
+          data: { seller_id: sellerIdNumber },
+          include: { items: true }
+        })
+      }
     } else {
-      cart = await prisma.cart.create({
-        data: {
-          buyer_id: Number(buyer_id),
-          seller_id: Number(seller_id),
-          estado: 'active'
-        },
+      let currentSellerId = cart.seller_id
+
+      if (!currentSellerId) {
+        const inferredSellerIds = Array.from(
+          new Set(
+            cart.items
+              .map((item) => getSellerIdFromProduct(item.product_id))
+              .filter((id): id is number => id !== null)
+          )
+        )
+
+        if (inferredSellerIds.length !== 1) {
+          return NextResponse.json(
+            { error: 'El carrito contiene productos de vendedores distintos. Vacialo antes de agregar nuevos productos.' },
+            { status: 409 }
+          )
+        }
+
+        currentSellerId = inferredSellerIds[0]
+        await prisma.cart.update({
+          where: { id: cart.id },
+          data: { seller_id: currentSellerId }
+        })
+      }
+
+      if (currentSellerId !== sellerIdNumber) {
+        return NextResponse.json(
+          { error: 'Ya tenés productos de otro vendedor en el carrito' },
+          { status: 409 }
+        )
+      }
+    }
+
+    if (cart.estado !== 'active') {
+      cart = await prisma.cart.update({
+        where: { id: cart.id },
+        data: { estado: 'active' },
         include: { items: true }
       })
     }
+  }
+
+  if (!cart) {
+    cart = await prisma.cart.create({
+      data: {
+        buyer_id: Number(buyer_id),
+        seller_id: sellerIdNumber,
+        estado: 'active'
+      },
+      include: { items: true }
+    })
   }
 
   const itemExistente = cart.items.find(i => i.product_id === Number(product_id))
@@ -86,7 +134,9 @@ export async function POST(request: NextRequest) {
   if (itemExistente) {
     await prisma.cartItem.update({
       where: { id: itemExistente.id },
-      data: { cantidad: itemExistente.cantidad + Number(cantidad) }
+      data: {
+        cantidad: itemExistente.cantidad + Number(cantidad)
+      }
     })
   } else {
     await prisma.cartItem.create({
@@ -100,6 +150,40 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true }, { status: 201 })
+}
+
+export async function PATCH(request: NextRequest) {
+  const body = await request.json()
+  const { cart_item_id, cantidad } = body
+
+  if (!cart_item_id || typeof cantidad !== 'number' || cantidad < 0) {
+    return NextResponse.json(
+      { error: 'cart_item_id y cantidad válidos son requeridos' },
+      { status: 400 }
+    )
+  }
+
+  const item = await prisma.cartItem.findUnique({
+    where: { id: Number(cart_item_id) }
+  })
+
+  if (!item) {
+    return NextResponse.json({ error: 'Item de carrito no encontrado' }, { status: 404 })
+  }
+
+  if (cantidad === 0) {
+    await prisma.cartItem.delete({
+      where: { id: item.id }
+    })
+    return NextResponse.json({ success: true })
+  }
+
+  await prisma.cartItem.update({
+    where: { id: item.id },
+    data: { cantidad: Number(cantidad) }
+  })
+
+  return NextResponse.json({ success: true })
 }
 
 export async function DELETE(request: NextRequest) {

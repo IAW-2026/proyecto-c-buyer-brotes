@@ -2,7 +2,7 @@ import { prisma } from '../lib/prisma'
 import { getVendedorById } from '../lib/api'
 import ImagenPlaceholder from '../components/ImagenPlaceholder'
 import Link from 'next/link'
-import { Heart } from 'lucide-react'
+import { Heart, MapPin, ArrowRight } from 'lucide-react'
 
 export default async function FavoritosPage() {
   const favoritos = await prisma.favorite.findMany({
@@ -19,7 +19,7 @@ export default async function FavoritosPage() {
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#F5F2EA' }}>
-      <section className="px-8 py-10 max-w-4xl mx-auto">
+      <section className="px-4 sm:px-8 py-10 max-w-5xl mx-auto">
         <Link href="/" className="text-sm mb-6 inline-block" style={{ color: '#7BA05D' }}>
           ← Volver al inicio
         </Link>
@@ -49,7 +49,7 @@ export default async function FavoritosPage() {
               return (
                 <div
                   key={fav.id}
-                  className="rounded-2xl overflow-hidden shadow-md"
+                  className="rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-[#EAF3E6] hover:border-[#7BA05D] hover:-translate-y-1"
                   style={{ backgroundColor: 'white' }}
                 >
                   <div
@@ -59,25 +59,28 @@ export default async function FavoritosPage() {
                     <ImagenPlaceholder tipo="producto" imagen={producto.imagen} />
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="text-lg font-bold mb-1" style={{ color: '#243B27' }}>
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs uppercase font-semibold tracking-[0.16em] text-[#7BA05D]">Favorito</span>
+                    </div>
+                    <h3 className="text-lg font-bold mb-2" style={{ color: '#243B27' }}>
                       {producto.nombre}
                     </h3>
-                    <p className="text-sm mb-1 flex items-center gap-1" style={{ color: '#7BA05D' }}>
-                      🏪 {vendedor.nombre}
-                    </p>
-                    <p className="text-sm mb-3" style={{ color: '#4C6B3D' }}>
-                      📍 {vendedor.ubicacion}
-                    </p>
-                    <p className="text-xl font-bold mb-4" style={{ color: '#4C6B3D' }}>
+                    <div className="mb-3 space-y-2 text-sm text-[#4C6B3D]">
+                      <p className="flex items-center gap-2">
+                        <MapPin size={14} /> {vendedor.ubicacion}
+                      </p>
+                      <p className="text-[#7BA05D]">{vendedor.nombre}</p>
+                    </div>
+                    <p className="text-xl font-bold mb-4" style={{ color: '#243B27' }}>
                       ${producto.precio.toLocaleString('es-AR')}
                     </p>
                     <Link
                       href={`/vendedores/${vendedor.id}`}
-                      className="block w-full py-2 rounded-full text-sm font-semibold text-white text-center"
-                      style={{ backgroundColor: '#7BA05D' }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#4C6B3D] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110"
                     >
-                      Ver tienda
+                      Ir a tienda
+                      <ArrowRight size={16} />
                     </Link>
                   </div>
                 </div>

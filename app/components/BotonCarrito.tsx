@@ -32,13 +32,9 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
         })
       })
 
-      if (res.status === 409) {
-        setMensaje('⚠️ Ya tenés productos de otro vendedor en el carrito')
-        return
-      }
-
       if (!res.ok) {
-        setMensaje('❌ Error al agregar al carrito')
+        const data = await res.json().catch(() => null)
+        setMensaje(data?.error || '❌ Error al agregar al carrito')
         return
       }
 

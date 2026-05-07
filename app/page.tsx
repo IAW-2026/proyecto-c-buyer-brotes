@@ -1,3 +1,6 @@
+import fs from 'fs'
+import path from 'path'
+import Image from 'next/image'
 import { getVendedores } from './lib/api'
 import Link from 'next/link'
 import Buscador from './components/Buscador'
@@ -11,6 +14,20 @@ export default async function Home() {
     2: 'Oferta',
     3: 'Nuevo',
     4: 'Más buscado'
+  }
+
+  const getFirstImageFromFolder = (folderName: string) => {
+    const folder = path.join(process.cwd(), 'public', folderName)
+    if (!fs.existsSync(folder)) return null
+
+    const files = fs.readdirSync(folder).filter(file => /\.(png|jpe?g|webp|avif|gif)$/i.test(file))
+    return files.length > 0 ? `/${folderName}/${files[0]}` : null
+  }
+
+  const images = {
+    jardinVertical: getFirstImageFromFolder('ImagenPared'),
+    escritorioVerde: getFirstImageFromFolder('ImagenEscritorio'),
+    balconUrbano: getFirstImageFromFolder('ImagenBalcon')
   }
 
   return (
@@ -161,59 +178,89 @@ export default async function Home() {
           Categorías populares
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          <div className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
+          <Link
+            href="/explorar?tipo=suculentas"
+            className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105"
+          >
             <Leaf size={32} className="mx-auto mb-3" style={{ color: '#7BA05D' }} />
             <h3 className="font-semibold text-sm" style={{ color: '#243B27' }}>Suculentas</h3>
             <p className="text-xs mt-1" style={{ color: '#4C6B3D' }}>Bajas en mantenimiento</p>
-          </div>
-          <div className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
+          </Link>
+          <Link
+            href="/explorar?tipo=interior"
+            className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105"
+          >
             <Flower2 size={32} className="mx-auto mb-3" style={{ color: '#7BA05D' }} />
             <h3 className="font-semibold text-sm" style={{ color: '#243B27' }}>Plantas de interior</h3>
             <p className="text-xs mt-1" style={{ color: '#4C6B3D' }}>Purificadoras del aire</p>
-          </div>
-          <div className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
+          </Link>
+          <Link
+            href="/explorar?tipo=accesorios"
+            className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105"
+          >
             <Package size={32} className="mx-auto mb-3" style={{ color: '#7BA05D' }} />
             <h3 className="font-semibold text-sm" style={{ color: '#243B27' }}>Macetas & kits</h3>
             <p className="text-xs mt-1" style={{ color: '#4C6B3D' }}>Todo incluido</p>
-          </div>
-          <div className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
+          </Link>
+          <Link
+            href="/explorar?tipo=raras"
+            className="rounded-2xl bg-white p-6 text-center shadow-sm border border-[#EAF3E6] transition-all duration-300 hover:shadow-lg hover:scale-105"
+          >
             <Sparkles size={32} className="mx-auto mb-3" style={{ color: '#7BA05D' }} />
             <h3 className="font-semibold text-sm" style={{ color: '#243B27' }}>Colecciones</h3>
             <p className="text-xs mt-1" style={{ color: '#4C6B3D' }}>Plantas raras</p>
-          </div>
+          </Link>
         </div>
       </section>
 
       {/* Inspírate */}
-      <section className="px-8 py-16" style={{ backgroundColor: '#EAF3E6' }}>
+      <section className="px-8 py-12" style={{ backgroundColor: '#EAF3E6' }}>
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold mb-8 text-center" style={{ color: '#243B27' }}>
+          <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#243B27' }}>
             Inspírate con estas ideas
           </h2>
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-2xl bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
-              <div className="h-32 rounded-xl mb-4 flex items-center justify-center" style={{ backgroundColor: '#F1FAF1' }}>
-                <Leaf size={48} style={{ color: '#7BA05D' }} />
+            <div className="rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
+              <div className="relative h-40 rounded-xl mb-3 overflow-hidden bg-[#F1FAF1]">
+                {images.jardinVertical ? (
+                  <Image src={images.jardinVertical} alt="Jardín vertical" fill className="object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <Leaf size={48} style={{ color: '#7BA05D' }} />
+                  </div>
+                )}
               </div>
-              <h3 className="font-semibold mb-2" style={{ color: '#243B27' }}>Jardín vertical</h3>
+              <h3 className="font-semibold mb-1" style={{ color: '#243B27' }}>Jardín vertical</h3>
               <p className="text-sm" style={{ color: '#4C6B3D' }}>
                 Crea un muro verde en tu hogar con plantas colgantes y suculentas.
               </p>
             </div>
-            <div className="rounded-2xl bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
-              <div className="h-32 rounded-xl mb-4 flex items-center justify-center" style={{ backgroundColor: '#F1FAF1' }}>
-                <Flower2 size={48} style={{ color: '#7BA05D' }} />
+            <div className="rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
+              <div className="relative h-40 rounded-xl mb-3 overflow-hidden bg-[#F1FAF1]">
+                {images.escritorioVerde ? (
+                  <Image src={images.escritorioVerde} alt="Escritorio verde" fill className="object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <Flower2 size={48} style={{ color: '#7BA05D' }} />
+                  </div>
+                )}
               </div>
-              <h3 className="font-semibold mb-2" style={{ color: '#243B27' }}>Escritorio verde</h3>
+              <h3 className="font-semibold mb-1" style={{ color: '#243B27' }}>Escritorio verde</h3>
               <p className="text-sm" style={{ color: '#4C6B3D' }}>
                 Mejora tu concentración con plantas purificadoras en tu espacio de trabajo.
               </p>
             </div>
-            <div className="rounded-2xl bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
-              <div className="h-32 rounded-xl mb-4 flex items-center justify-center" style={{ backgroundColor: '#F1FAF1' }}>
-                <Package size={48} style={{ color: '#7BA05D' }} />
+            <div className="rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
+              <div className="relative h-40 rounded-xl mb-3 overflow-hidden bg-[#F1FAF1]">
+                {images.balconUrbano ? (
+                  <Image src={images.balconUrbano} alt="Balcón urbano" fill className="object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <Package size={48} style={{ color: '#7BA05D' }} />
+                  </div>
+                )}
               </div>
-              <h3 className="font-semibold mb-2" style={{ color: '#243B27' }}>Balcón urbano</h3>
+              <h3 className="font-semibold mb-1" style={{ color: '#243B27' }}>Balcón urbano</h3>
               <p className="text-sm" style={{ color: '#4C6B3D' }}>
                 Transforma tu balcón en un oasis con plantas resistentes y aromáticas.
               </p>

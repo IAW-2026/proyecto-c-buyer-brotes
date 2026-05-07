@@ -17,7 +17,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="w-56 min-h-screen flex flex-col justify-between py-6 px-4 shrink-0"
+      className="w-56 min-h-screen flex flex-col gap-4 py-6 px-4 shrink-0"
       style={{ backgroundColor: 'white', borderRight: '1px solid #EAF3E6' }}
     >
       <div className="flex flex-col gap-1">
@@ -88,7 +88,7 @@ export default function Sidebar() {
           Descubrí las mejores plantas de viveros con confianza.
         </p>
         <Link
-          href="/"
+          href="/explorar"
           className="block w-full py-2 rounded-full text-xs font-semibold text-white transition-all hover:brightness-110"
           style={{ backgroundColor: '#4C6B3D' }}
         >

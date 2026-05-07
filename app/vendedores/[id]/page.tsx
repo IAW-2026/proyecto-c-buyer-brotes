@@ -59,7 +59,7 @@ export default async function VendedorPage({ params }: Props) {
           {vendedor.productos.map((producto) => (
             <div
               key={producto.id}
-              className="rounded-2xl overflow-hidden shadow-md"
+              className="rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-[#EAF3E6] hover:border-[#7BA05D] hover:-translate-y-1"
               style={{ backgroundColor: 'white' }}
             >
               {/* Imagen del producto */}
