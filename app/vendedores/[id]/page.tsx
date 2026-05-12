@@ -34,7 +34,9 @@ export default async function VendedorPage({ params }: Props) {
           ← Volver al inicio
         </Link>
         <div className="flex items-center gap-6 mt-2">
-          <div className="text-7xl">{vendedor.imagen}</div>
+          <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: '#EAF3E6' }}>
+            <ImagenPlaceholder tipo="vendedor" imagen={vendedor.imagen} />
+          </div>
           <div>
             <h1 className="text-3xl font-bold" style={{ color: '#243B27' }}>
               {vendedor.nombre}
