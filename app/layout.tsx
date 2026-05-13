@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
+import { ClerkProvider } from '@clerk/nextjs'
 
 export const metadata: Metadata = {
   title: 'Brotes',
@@ -14,16 +15,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
-      <body>
-        <Navbar />
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1">
-            {children}
+    <ClerkProvider>
+      <html lang="es">
+        <body>
+          <Navbar />
+          <div className="flex">
+            <Sidebar />
+            <div className="flex-1">
+              {children}
+            </div>
           </div>
-        </div>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
