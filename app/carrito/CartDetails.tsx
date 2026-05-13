@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Leaf, Minus, Plus, ArrowRight } from 'lucide-react'
 import BotonVaciarCarrito from '../components/BotonVaciarCarrito'
+import BotonConfirmarCompra from '../components/BotonConfirmarCompra'
 
 type CartItem = {
   id: number
@@ -19,13 +20,14 @@ type Cart = {
 
 type Props = {
   initialCart: Cart | null
+  buyerId: number
 }
 
 function formatPrice(value: number) {
   return `$${value.toLocaleString('es-AR')}`
 }
 
-export default function CartDetails({ initialCart }: Props) {
+export default function CartDetails({ initialCart, buyerId }: Props) {
   const [cart, setCart] = useState<Cart | null>(initialCart)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
   const [mensaje, setMensaje] = useState('')
@@ -56,7 +58,6 @@ export default function CartDetails({ initialCart }: Props) {
         const updatedItems = prev.items
           .map(item => (item.id === itemId ? { ...item, cantidad } : item))
           .filter(item => item.cantidad > 0)
-
         return { ...prev, items: updatedItems }
       })
     } catch (error) {
@@ -135,7 +136,6 @@ export default function CartDetails({ initialCart }: Props) {
                     <Plus size={18} />
                   </button>
                 </div>
-                <p className="text-sm text-[#4C6B3D]">Presiona - para eliminar una unidad, + para agregar más.</p>
               </div>
             </div>
 
@@ -159,9 +159,7 @@ export default function CartDetails({ initialCart }: Props) {
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-3xl border border-[#EAF3E6] bg-white p-6 shadow-sm">
-          <p className="text-sm mb-2" style={{ color: '#4C6B3D' }}>
-            Resumen del pedido
-          </p>
+          <p className="text-sm mb-2" style={{ color: '#4C6B3D' }}>Resumen del pedido</p>
           <div className="flex items-center justify-between pb-4 border-b border-[#EAF3E6]">
             <span className="text-sm" style={{ color: '#243B27' }}>Subtotal</span>
             <span className="font-semibold" style={{ color: '#243B27' }}>{formatPrice(total)}</span>
@@ -178,13 +176,7 @@ export default function CartDetails({ initialCart }: Props) {
         </div>
 
         <div className="rounded-3xl bg-[#EAF3E6] p-6 shadow-sm flex flex-col gap-4">
-          <button
-            type="button"
-            className="w-full py-4 rounded-full bg-[#4C6B3D] text-white font-bold text-lg transition-all duration-200 hover:brightness-110 flex items-center justify-center gap-2"
-          >
-            Confirmar compra
-            <ArrowRight size={20} />
-          </button>
+          <BotonConfirmarCompra cartId={cart.id} buyerId={buyerId} />
           <BotonVaciarCarrito cartId={cart.id} />
         </div>
       </div>

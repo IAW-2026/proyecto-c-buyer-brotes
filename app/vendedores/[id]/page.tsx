@@ -1,9 +1,10 @@
 import { getVendedorById } from '../../lib/api'
 import { prisma } from '../../lib/prisma'
+import { getBuyerFromClerk } from '../../lib/auth'
 import BotonCarrito from '../../components/BotonCarrito'
 import BotonFavorito from '../../components/BotonFavorito'
-import Link from 'next/link'
 import ImagenPlaceholder from '../../components/ImagenPlaceholder'
+import Link from 'next/link'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -12,10 +13,11 @@ type Props = {
 export default async function VendedorPage({ params }: Props) {
   const { id } = await params
   const vendedor = await getVendedorById(Number(id))
+  const buyer = await getBuyerFromClerk()
 
-  const favoritos = await prisma.favorite.findMany({
-    where: { buyer_id: 1 }
-  })
+  const favoritos = buyer ? await prisma.favorite.findMany({
+    where: { buyer_id: buyer.id }
+  }) : []
 
   if (!vendedor) {
     return (
@@ -64,7 +66,6 @@ export default async function VendedorPage({ params }: Props) {
               className="rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-[#EAF3E6] hover:border-[#7BA05D] hover:-translate-y-1"
               style={{ backgroundColor: 'white' }}
             >
-              {/* Imagen del producto */}
               <div
                 className="h-36 flex items-center justify-center relative"
                 style={{ backgroundColor: '#EAF3E6' }}
@@ -73,12 +74,11 @@ export default async function VendedorPage({ params }: Props) {
                 <BotonFavorito
                   productoId={producto.id}
                   sellerId={vendedor.id}
-                  buyerId={1}
+                  buyerId={buyer?.id ?? 0}
                   esFavorito={favoritos.some(f => f.product_id === producto.id)}
                 />
               </div>
 
-              {/* Info del producto */}
               <div className="p-4">
                 <h3 className="text-lg font-bold mb-1" style={{ color: '#243B27' }}>
                   {producto.nombre}
@@ -99,7 +99,7 @@ export default async function VendedorPage({ params }: Props) {
                   productNombre={producto.nombre}
                   precio={producto.precio}
                   sellerId={vendedor.id}
-                  buyerId={1}
+                  buyerId={buyer?.id ?? 0}
                 />
               </div>
             </div>

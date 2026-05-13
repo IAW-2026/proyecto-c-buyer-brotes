@@ -1,12 +1,15 @@
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
 import { prisma } from '../lib/prisma'
+import { getBuyerFromClerk } from '../lib/auth'
 
 export default async function Navbar() {
-  const cart = await prisma.cart.findFirst({
-    where: { buyer_id: 1, estado: 'active' },
+  const buyer = await getBuyerFromClerk()
+
+  const cart = buyer ? await prisma.cart.findFirst({
+    where: { buyer_id: buyer.id, estado: 'active' },
     include: { items: true }
-  })
+  }) : null
 
   const cantidadItems = cart?.items.reduce((acc, item) => acc + item.cantidad, 0) ?? 0
 
@@ -33,7 +36,7 @@ export default async function Navbar() {
           className="px-4 py-2 rounded-full text-sm font-medium"
           style={{ backgroundColor: '#F5F2EA', color: '#4C6B3D' }}
         >
-          Iniciar sesión
+          {buyer ? buyer.nombre : 'Iniciar sesión'}
         </button>
       </div>
     </nav>

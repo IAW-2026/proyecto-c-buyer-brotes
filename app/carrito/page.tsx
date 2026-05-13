@@ -2,25 +2,30 @@ import { prisma } from '../lib/prisma'
 import Link from 'next/link'
 import CartDetails from './CartDetails'
 import { vendedores } from '../lib/mock-data'
-import { ShoppingCart, Leaf, Truck } from 'lucide-react'
+import { ShoppingCart, Truck } from 'lucide-react'
+import { getBuyerFromClerk } from '../lib/auth'
 
 function getProductName(productId: number) {
   const product = vendedores
     .flatMap(vendor => vendor.productos)
     .find(producto => producto.id === productId)
-
   return product?.nombre ?? null
 }
 
 export default async function CarritoPage() {
+  const buyer = await getBuyerFromClerk()
+
+  if (!buyer) {
+    return (
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5F2EA' }}>
+        <p style={{ color: '#243B27' }}>Tenés que iniciar sesión para ver tu carrito</p>
+      </main>
+    )
+  }
+
   const cart = await prisma.cart.findFirst({
-    where: {
-      buyer_id: 1,
-      estado: 'active'
-    },
-    include: {
-      items: true
-    }
+    where: { buyer_id: buyer.id, estado: 'active' },
+    include: { items: true }
   })
 
   const cartData = cart
@@ -50,7 +55,7 @@ export default async function CarritoPage() {
           </div>
         </div>
 
-        <CartDetails initialCart={cartData} />
+        <CartDetails initialCart={cartData} buyerId={buyer.id} />
       </section>
     </main>
   )

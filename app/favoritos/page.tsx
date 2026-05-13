@@ -3,10 +3,21 @@ import { getVendedorById } from '../lib/api'
 import ImagenPlaceholder from '../components/ImagenPlaceholder'
 import Link from 'next/link'
 import { Heart, MapPin, ArrowRight } from 'lucide-react'
+import { getBuyerFromClerk } from '../lib/auth'
 
 export default async function FavoritosPage() {
+  const buyer = await getBuyerFromClerk()
+
+  if (!buyer) {
+    return (
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5F2EA' }}>
+        <p style={{ color: '#243B27' }}>Tenés que iniciar sesión para ver tus favoritos</p>
+      </main>
+    )
+  }
+
   const favoritos = await prisma.favorite.findMany({
-    where: { buyer_id: 1 }
+    where: { buyer_id: buyer.id }
   })
 
   const items = await Promise.all(
@@ -52,13 +63,9 @@ export default async function FavoritosPage() {
                   className="rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-[#EAF3E6] hover:border-[#7BA05D] hover:-translate-y-1"
                   style={{ backgroundColor: 'white' }}
                 >
-                  <div
-                    className="h-36 flex items-center justify-center"
-                    style={{ backgroundColor: '#EAF3E6' }}
-                  >
+                  <div className="h-36 flex items-center justify-center" style={{ backgroundColor: '#EAF3E6' }}>
                     <ImagenPlaceholder tipo="producto" imagen={producto.imagen} />
                   </div>
-
                   <div className="p-5">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs uppercase font-semibold tracking-[0.16em] text-[#7BA05D]">Favorito</span>
@@ -79,8 +86,7 @@ export default async function FavoritosPage() {
                       href={`/vendedores/${vendedor.id}`}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#4C6B3D] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110"
                     >
-                      Ir a tienda
-                      <ArrowRight size={16} />
+                      Ir a tienda <ArrowRight size={16} />
                     </Link>
                   </div>
                 </div>
