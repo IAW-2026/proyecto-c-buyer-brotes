@@ -2,9 +2,14 @@ import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
 import { prisma } from '../lib/prisma'
 import { getBuyerFromClerk } from '../lib/auth'
+import { cancelarOrdenesCaducadas } from '../lib/cancelarOrdenesCaducadas'
 
 export default async function Navbar() {
   const buyer = await getBuyerFromClerk()
+
+  if (buyer) {
+    await cancelarOrdenesCaducadas(buyer.id)
+  }
 
   const cart = buyer ? await prisma.cart.findFirst({
     where: { buyer_id: buyer.id, estado: 'active' },
