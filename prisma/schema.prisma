@@ -8,14 +8,19 @@ datasource db {
 }
 
 model Buyer {
-  id            Int     @id @default(autoincrement())
-  clerk_user_id String  @unique
+  id            Int       @id @default(autoincrement())
+  clerk_user_id String    @unique
   nombre        String
   email         String
   direccion     String?
-  cart          Cart?
-  orders        Order[]
-  favorites     Favorite[]
+  estado        String    @default("activo")
+  deleted_at    DateTime?
+  delete_reason String?
+  created_at    DateTime  @default(now())
+
+  cart      Cart?
+  orders    Order[]
+  favorites Favorite[]
 }
 
 model Cart {

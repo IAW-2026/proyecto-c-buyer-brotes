@@ -3,9 +3,13 @@ import { ShoppingCart } from 'lucide-react'
 import { prisma } from '../lib/prisma'
 import { getBuyerFromClerk } from '../lib/auth'
 import { cancelarOrdenesCaducadas } from '../lib/cancelarOrdenesCaducadas'
+import { auth } from '@clerk/nextjs/server'
 
 export default async function Navbar() {
   const buyer = await getBuyerFromClerk()
+  const { sessionClaims } = await auth()
+  const roles = (sessionClaims?.metadata as any) ?? []
+  const esAdmin = Array.isArray(roles) ? roles.includes('admin') : roles === 'admin'
 
   if (buyer) {
     await cancelarOrdenesCaducadas(buyer.id)
@@ -25,6 +29,16 @@ export default async function Navbar() {
       </Link>
 
       <div className="flex items-center gap-4">
+        {esAdmin && (
+          <Link
+            href="/admin"
+            className="px-4 py-2 rounded-full text-sm font-medium"
+            style={{ backgroundColor: '#E07A5F', color: 'white' }}
+          >
+            Admin
+          </Link>
+        )}
+
         <Link href="/carrito" className="relative">
           <ShoppingCart size={24} color="#F5F2EA" />
           {cantidadItems > 0 && (
