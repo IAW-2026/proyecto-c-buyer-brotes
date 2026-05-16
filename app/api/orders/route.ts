@@ -65,9 +65,14 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true, order_id: order.id }, { status: 201 })
 }
 
+// Expuesto para Payments App — requiere SERVICE_API_KEY
 export async function GET(request: NextRequest) {
-  const id = request.nextUrl.searchParams.get('id')
+  const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (apiKey !== process.env.BUYER_SERVICE_API_KEY) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
 
+  const id = request.nextUrl.searchParams.get('id')
   if (!id) {
     return NextResponse.json({ error: 'id requerido' }, { status: 400 })
   }
@@ -85,16 +90,19 @@ export async function GET(request: NextRequest) {
     id: order.id,
     buyer_id: order.buyer_id,
     seller_id: order.seller_id,
-    total_amount: order.total,
-    currency: 'ARS',
-    payment_id: order.payment_id,
     status: order.estado,
+    total: {
+      amount: Number(order.total),
+      currency: 'ARS'
+    },
+    payment_id: order.payment_id,
     items: order.items.map(item => ({
       product_id: item.product_id,
       product_name: item.product_name_snapshot,
-      unit_price: item.unit_price_snapshot,
+      unit_price: Number(item.unit_price_snapshot),
       quantity: item.cantidad,
       subtotal: Number(item.unit_price_snapshot) * item.cantidad
-    }))
+    })),
+    created_at: order.created_at
   })
 }

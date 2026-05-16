@@ -8,9 +8,14 @@ type Props = {
 const estadosValidos = ['confirmada', 'en_preparacion', 'listo', 'entregada', 'caducada']
 
 export async function POST(request: NextRequest, { params }: Props) {
+  const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (apiKey !== process.env.BUYER_SERVICE_API_KEY) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
+
   const { id } = await params
   const body = await request.json()
-  const { status, updated_at } = body
+  const { status } = body
 
   if (!estadosValidos.includes(status)) {
     return NextResponse.json(

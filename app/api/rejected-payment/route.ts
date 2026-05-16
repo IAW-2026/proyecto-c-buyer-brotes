@@ -2,6 +2,11 @@ import { prisma } from '../../lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
+  const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (apiKey !== process.env.BUYER_SERVICE_API_KEY) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
+
   const body = await request.json()
   const { payment_id, buyer_id } = body
 
@@ -13,7 +18,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (!order) {
-    return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
+    return NextResponse.json({ error: 'Orden pendiente no encontrada' }, { status: 404 })
   }
 
   await prisma.order.update({
