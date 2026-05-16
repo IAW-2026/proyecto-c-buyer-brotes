@@ -10,10 +10,22 @@ export default async function AdminPage() {
 
   if (!esAdmin) redirect('/')
 
-  const buyers = await prisma.buyer.findMany({
+  const buyersRaw = await prisma.buyer.findMany({
     include: { orders: true },
     orderBy: { id: 'desc' }
   })
+
+  // Convertir Decimal a number para poder pasarlo al Client Component
+  const buyers = buyersRaw.map(buyer => ({
+    ...buyer,
+    created_at: buyer.created_at.toISOString(),
+    deleted_at: buyer.deleted_at?.toISOString() ?? null,
+    orders: buyer.orders.map(order => ({
+      ...order,
+      total: Number(order.total),
+      created_at: order.created_at.toISOString()
+    }))
+  }))
 
   return <AdminPanel buyersIniciales={buyers} />
 }

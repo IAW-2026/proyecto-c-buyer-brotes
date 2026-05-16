@@ -5,9 +5,9 @@ import { Search, Trash2, PauseCircle, PlayCircle, ChevronDown, ChevronUp } from 
 
 type Order = {
   id: number
-  total: any
+  total: number
   estado: string
-  created_at: Date
+  created_at: string
 }
 
 type Buyer = {
@@ -15,8 +15,8 @@ type Buyer = {
   nombre: string
   email: string
   estado: string
-  created_at: Date
-  deleted_at: Date | null
+  created_at: string
+  deleted_at: string | null
   delete_reason: string | null
   orders: Order[]
 }
@@ -53,7 +53,7 @@ export default function AdminPanel({ buyersIniciales }: Props) {
         setBuyers(prev => prev.map(b => b.id === id ? {
           ...b,
           estado: data.estado,
-          deleted_at: accion === 'eliminar' ? new Date() : b.deleted_at,
+          deleted_at: accion === 'eliminar' ? new Date().toISOString() : b.deleted_at,
           delete_reason: motivo ?? b.delete_reason
         } : b))
       } else {
@@ -66,7 +66,7 @@ export default function AdminPanel({ buyersIniciales }: Props) {
     }
   }
 
-  const formatDate = (date: Date) => new Date(date).toLocaleDateString('es-AR', {
+  const formatDate = (date: string) => new Date(date).toLocaleDateString('es-AR', {
     day: '2-digit', month: 'short', year: 'numeric'
   })
 
@@ -164,11 +164,9 @@ export default function AdminPanel({ buyersIniciales }: Props) {
                     >
                       {buyer.estado}
                     </span>
-
                     <span className="text-sm" style={{ color: '#4C6B3D' }}>
                       {buyer.orders.length} compra{buyer.orders.length !== 1 ? 's' : ''}
                     </span>
-
                     <button
                       onClick={() => setExpandido(expandido === buyer.id ? null : buyer.id)}
                       className="p-2 rounded-full hover:bg-[#EAF3E6] transition-all"
@@ -258,7 +256,6 @@ export default function AdminPanel({ buyersIniciales }: Props) {
                           </button>
                         )}
 
-                        {/* Eliminar */}
                         <div className="flex flex-col gap-2">
                           <textarea
                             value={motivoEliminar[buyer.id] ?? ''}
