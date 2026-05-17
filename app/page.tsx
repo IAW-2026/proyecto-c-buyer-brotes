@@ -1,15 +1,29 @@
 import fs from 'fs'
 import path from 'path'
-import Image from 'next/image'
 import { getVendedores } from './lib/api'
 import Link from 'next/link'
 import Buscador from './components/Buscador'
 import ImagenCarousel from './components/ImagenCarousel'
-import { MapPin, Leaf, Flower2, Package, Sparkles } from 'lucide-react'
 import ImagenPlaceholder from './components/ImagenPlaceholder'
+import { MapPin, Leaf, Flower2, Package, Sparkles } from 'lucide-react'
 
-export default async function Home() {
-  const vendedores = await getVendedores()
+export default async function Home({
+  searchParams
+}: {
+  searchParams: Promise<{ [key: string]: string | undefined }>
+}) {
+  const { pagina } = await searchParams
+  const paginaActual = Number(pagina ?? 1)
+  const porPagina = 4
+
+  const todosLosVendedores = await getVendedores()
+  const total = todosLosVendedores.length
+  const totalPaginas = Math.ceil(total / porPagina)
+  const vendedores = todosLosVendedores.slice(
+    (paginaActual - 1) * porPagina,
+    paginaActual * porPagina
+  )
+
   const vendedorTags: Record<number, string> = {
     1: 'Top ventas',
     2: 'Oferta',
@@ -40,7 +54,7 @@ export default async function Home() {
         <div className="relative mx-auto grid max-w-6xl gap-8 lg:gap-10 lg:grid-cols-[1.2fr_0.9fr] items-center">
           <div className="space-y-6 rounded-[2rem] border border-white/80 bg-white/90 p-6 sm:p-8 shadow-[0_40px_80px_rgba(36,59,39,0.08)]">
             <div className="mb-4">
-              <Buscador vendedores={vendedores} />
+              <Buscador vendedores={todosLosVendedores} />
             </div>
             <span className="inline-flex items-center rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
               <Leaf size={16} className="mr-2" /> Viveros verificados · envío exprés
@@ -52,15 +66,15 @@ export default async function Home() {
               Encontrá plantas, accesorios y cuidados de los mejores vendedores en un solo lugar.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md cursor-pointer">
+              <Link href="/explorar?tipo=suculentas" className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md">
                 <Leaf size={16} /> Suculentas +20%
-              </div>
-              <div className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md cursor-pointer">
+              </Link>
+              <Link href="/explorar?tipo=interior" className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md">
                 <Flower2 size={16} /> Plantas de interior
-              </div>
-              <div className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md cursor-pointer">
+              </Link>
+              <Link href="/explorar?tipo=accesorios" className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md">
                 <Package size={16} /> Macetas & kits
-              </div>
+              </Link>
             </div>
           </div>
 
@@ -76,9 +90,9 @@ export default async function Home() {
                 <p className="mt-3 text-sm" style={{ color: '#4C6B3D' }}>
                   Aprovechá descuentos exclusivos y envío gratis en pedidos mayores a $30.000.
                 </p>
-                <div className="mt-6 inline-flex rounded-full bg-[#4C6B3D] px-4 py-2 text-xs font-semibold text-white transition-all duration-300 hover:brightness-110 hover:shadow-lg cursor-pointer">
+                <Link href="/explorar" className="mt-6 inline-flex rounded-full bg-[#4C6B3D] px-4 py-2 text-xs font-semibold text-white transition-all duration-300 hover:brightness-110">
                   Ver promociones
-                </div>
+                </Link>
               </div>
 
               <div className="rounded-[1.75rem] bg-white border border-[#EAF3E6] p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
@@ -132,7 +146,7 @@ export default async function Home() {
 
               <div className="p-5">
                 <div className="mb-3 inline-flex rounded-full bg-gradient-to-r from-[#EAF3E6] to-[#E8F1E3] px-3 py-1 text-xs font-semibold text-[#4C6B3D] animate-pulse-subtle border border-[#7BA05D]/20">
-                  {vendedorTags[vendedor.id]}
+                  {vendedorTags[vendedor.id] ?? 'Destacado'}
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: '#243B27' }}>
                   {vendedor.nombre}
@@ -146,7 +160,9 @@ export default async function Home() {
 
                 <div className="grid grid-cols-3 gap-2 mb-4 py-3 border-t border-b border-[#EAF3E6]">
                   <div className="text-center">
-                    <p className="text-xs font-semibold" style={{ color: '#243B27' }}>+20</p>
+                    <p className="text-xs font-semibold" style={{ color: '#243B27' }}>
+                      {vendedor.productos.length}
+                    </p>
                     <p className="text-xs" style={{ color: '#7BA05D' }}>Plantas</p>
                   </div>
                   <div className="text-center">
@@ -170,6 +186,45 @@ export default async function Home() {
             </div>
           ))}
         </div>
+
+        {/* Paginación */}
+        {totalPaginas > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            {paginaActual > 1 && (
+              <Link
+                href={`/?pagina=${paginaActual - 1}`}
+                className="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
+                style={{ borderColor: '#7BA05D', color: '#7BA05D' }}
+              >
+                ← Anterior
+              </Link>
+            )}
+            {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(num => (
+              <Link
+                key={num}
+                href={`/?pagina=${num}`}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
+                style={{
+                  backgroundColor: num === paginaActual ? '#4C6B3D' : 'white',
+                  color: num === paginaActual ? 'white' : '#4C6B3D',
+                  border: '2px solid',
+                  borderColor: num === paginaActual ? '#4C6B3D' : '#EAF3E6'
+                }}
+              >
+                {num}
+              </Link>
+            ))}
+            {paginaActual < totalPaginas && (
+              <Link
+                href={`/?pagina=${paginaActual + 1}`}
+                className="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
+                style={{ borderColor: '#7BA05D', color: '#7BA05D' }}
+              >
+                Siguiente →
+              </Link>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Categorías populares */}

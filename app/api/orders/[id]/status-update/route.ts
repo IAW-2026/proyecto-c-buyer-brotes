@@ -9,7 +9,7 @@ const estadosValidos = ['confirmada', 'en_preparacion', 'listo', 'entregada', 'c
 
 export async function POST(request: NextRequest, { params }: Props) {
   const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (apiKey !== process.env.BUYER_SERVICE_API_KEY) {
+  if (apiKey !== process.env.SERVICE_API_KEY) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

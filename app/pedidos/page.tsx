@@ -14,7 +14,13 @@ function formatDate(date: string | Date) {
   })
 }
 
-export default async function PedidosPage() {
+const POR_PAGINA = 5
+
+export default async function PedidosPage({
+  searchParams
+}: {
+  searchParams: Promise<{ [key: string]: string | undefined }>
+}) {
   const buyer = await getBuyerFromClerk()
 
   if (!buyer) {
@@ -25,10 +31,18 @@ export default async function PedidosPage() {
     )
   }
 
+  const params = await searchParams
+  const paginaActual = Number(params.pagina ?? 1)
+
+  const totalOrdenes = await prisma.order.count({ where: { buyer_id: buyer.id } })
+  const totalPaginas = Math.ceil(totalOrdenes / POR_PAGINA)
+
   const orders = await prisma.order.findMany({
     where: { buyer_id: buyer.id },
     include: { items: true },
-    orderBy: { created_at: 'desc' }
+    orderBy: { created_at: 'desc' },
+    skip: (paginaActual - 1) * POR_PAGINA,
+    take: POR_PAGINA
   })
 
   const pendingOrders = orders.filter(order => order.estado === 'pendiente')
@@ -46,23 +60,16 @@ export default async function PedidosPage() {
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
             <Package size={18} />
-            {orders.length} pedido{orders.length === 1 ? '' : 's'} registrados
+            {totalOrdenes} pedido{totalOrdenes === 1 ? '' : 's'} registrados
           </div>
         </div>
 
-        {pendingOrders.length === 0 && historyOrders.length === 0 ? (
+        {totalOrdenes === 0 ? (
           <div className="rounded-[2rem] border border-[#EAF3E6] bg-white p-10 text-center shadow-sm">
             <CheckCircle2 size={48} className="mx-auto mb-4" style={{ color: '#7BA05D' }} />
-            <h2 className="text-2xl font-bold mb-2" style={{ color: '#243B27' }}>
-              Todavía no tenés pedidos
-            </h2>
-            <p className="text-sm text-[#4C6B3D] mb-6">
-              Cuando completes una compra, tus pedidos aparecerán aquí.
-            </p>
-            <Link
-              href="/explorar"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#4C6B3D] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110"
-            >
+            <h2 className="text-2xl font-bold mb-2" style={{ color: '#243B27' }}>Todavía no tenés pedidos</h2>
+            <p className="text-sm text-[#4C6B3D] mb-6">Cuando completes una compra, tus pedidos aparecerán aquí.</p>
+            <Link href="/explorar" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#4C6B3D] px-6 py-3 text-sm font-semibold text-white transition-all hover:brightness-110">
               Explorar plantas <ArrowRight size={18} />
             </Link>
           </div>
@@ -70,20 +77,15 @@ export default async function PedidosPage() {
           <div className="grid gap-8">
             {pendingOrders.length > 0 && (
               <section className="rounded-[2rem] border border-[#EAF3E6] bg-white p-8 shadow-sm">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <p className="text-sm uppercase tracking-[0.18em] font-semibold" style={{ color: '#7BA05D' }}>
-                      Pedidos pendientes
-                    </p>
-                    <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>
-                      Tus pedidos en curso
-                    </h2>
+                    <p className="text-sm uppercase tracking-[0.18em] font-semibold" style={{ color: '#7BA05D' }}>Pendientes</p>
+                    <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>Tus pedidos en curso</h2>
                   </div>
                   <span className="rounded-full bg-[#F0F9F1] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
                     {pendingOrders.length} pendiente{pendingOrders.length === 1 ? '' : 's'}
                   </span>
                 </div>
-
                 <div className="grid gap-6">
                   {pendingOrders.map(order => {
                     const seller = vendedores.find(v => v.id === order.seller_id)
@@ -119,7 +121,7 @@ export default async function PedidosPage() {
                             </div>
                           ))}
                         </div>
-                        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mt-6 flex items-center justify-between">
                           <p className="text-sm text-[#4C6B3D]">Total estimado</p>
                           <p className="text-2xl font-bold" style={{ color: '#243B27' }}>
                             {formatPrice(order.total.toNumber())}
@@ -134,15 +136,9 @@ export default async function PedidosPage() {
 
             {historyOrders.length > 0 && (
               <section className="rounded-[2rem] border border-[#EAF3E6] bg-white p-8 shadow-sm">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-8">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.18em] font-semibold" style={{ color: '#7BA05D' }}>
-                      Historial de pedidos
-                    </p>
-                    <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>
-                      Pedidos ya realizados
-                    </h2>
-                  </div>
+                <div className="mb-6">
+                  <p className="text-sm uppercase tracking-[0.18em] font-semibold" style={{ color: '#7BA05D' }}>Historial</p>
+                  <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>Pedidos ya realizados</h2>
                 </div>
                 <div className="grid gap-6">
                   {historyOrders.map(order => {
@@ -179,7 +175,7 @@ export default async function PedidosPage() {
                             </div>
                           ))}
                         </div>
-                        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mt-6 flex items-center justify-between">
                           <p className="text-sm text-[#4C6B3D]">Total</p>
                           <p className="text-2xl font-bold" style={{ color: '#243B27' }}>
                             {formatPrice(order.total.toNumber())}
@@ -190,6 +186,37 @@ export default async function PedidosPage() {
                   })}
                 </div>
               </section>
+            )}
+
+            {/* Paginación */}
+            {totalPaginas > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                {paginaActual > 1 && (
+                  <Link href={`/pedidos?pagina=${paginaActual - 1}`} className="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all" style={{ borderColor: '#7BA05D', color: '#7BA05D' }}>
+                    ← Anterior
+                  </Link>
+                )}
+                {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(num => (
+                  <Link
+                    key={num}
+                    href={`/pedidos?pagina=${num}`}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
+                    style={{
+                      backgroundColor: num === paginaActual ? '#4C6B3D' : 'white',
+                      color: num === paginaActual ? 'white' : '#4C6B3D',
+                      border: '2px solid',
+                      borderColor: num === paginaActual ? '#4C6B3D' : '#EAF3E6'
+                    }}
+                  >
+                    {num}
+                  </Link>
+                ))}
+                {paginaActual < totalPaginas && (
+                  <Link href={`/pedidos?pagina=${paginaActual + 1}`} className="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all" style={{ borderColor: '#7BA05D', color: '#7BA05D' }}>
+                    Siguiente →
+                  </Link>
+                )}
+              </div>
             )}
           </div>
         )}
