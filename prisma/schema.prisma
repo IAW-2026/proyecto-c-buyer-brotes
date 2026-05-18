@@ -1,76 +1,64 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Buyer {
   id            Int       @id @default(autoincrement())
-  clerk_user_id String    @unique
-  nombre        String
-  email         String
-  direccion     String?
+  email         String    @unique
+  nombre        String?
   estado        String    @default("activo")
+  created_at    DateTime  @default(now())
   deleted_at    DateTime?
   delete_reason String?
-  created_at    DateTime  @default(now())
-
-  cart      Cart?
-  orders    Order[]
-  favorites Favorite[]
+  orders        Order[]
+  cart          Cart?
 }
 
 model Cart {
-  id        Int        @id @default(autoincrement())
-  estado    String     @default("active")
-  seller_id Int?
-  buyer_id  Int        @unique
-  buyer     Buyer      @relation(fields: [buyer_id], references: [id])
-  items     CartItem[]
+  id         Int        @id @default(autoincrement())
+  buyer_id   Int        @unique
+  status     String     @default("active")
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  buyer      Buyer      @relation(fields: [buyer_id], references: [id])
+  items      CartItem[]
 }
 
 model CartItem {
-  id              Int     @id @default(autoincrement())
-  product_id      Int
-  cantidad        Int
-  precio_unitario Decimal
-  cart_id         Int
-  cart            Cart    @relation(fields: [cart_id], references: [id])
+  id         Int      @id @default(autoincrement())
+  cart_id    Int
+  product_id Int
+  quantity   Int
+  created_at DateTime @default(now())
+  cart       Cart     @relation(fields: [cart_id], references: [id])
 }
 
 model Order {
   id         Int         @id @default(autoincrement())
-  seller_id  Int
-  total      Decimal
-  estado     String      @default("pending")
-  payment_id Int?
-  created_at DateTime    @default(now())
   buyer_id   Int
+  seller_id  Int
+  total      Float
+  estado     String      @default("pendiente")
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
   buyer      Buyer       @relation(fields: [buyer_id], references: [id])
   items      OrderItem[]
 }
 
 model OrderItem {
-  id                    Int     @id @default(autoincrement())
-  product_id            Int
-  product_name_snapshot String
-  unit_price_snapshot   Decimal
-  cantidad              Int
-  order_id              Int
-  order                 Order   @relation(fields: [order_id], references: [id])
-}
-
-model Favorite {
-  id         Int      @id @default(autoincrement())
-  buyer_id   Int
-  product_id Int
-  seller_id  Int
-  created_at DateTime @default(now())
-
-  buyer Buyer @relation(fields: [buyer_id], references: [id])
-
-  @@unique([buyer_id, product_id])
+  id                     Int      @id @default(autoincrement())
+  order_id               Int
+  product_id             Int
+  quantity               Int
+  product_name_snapshot  String   // Requisito: Snapshot del nombre
+  product_price_snapshot Float    // Requisito: Snapshot del precio
+  created_at             DateTime @default(now())
+  order                  Order    @relation(fields: [order_id], references: [id])
 }

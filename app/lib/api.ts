@@ -50,3 +50,20 @@ export async function getEstadoPago(pagoId: number) {
   // return res.json()
   return { id: pagoId, status: 'approved' }
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// API EXTERNA OBLIGATORIA (PRIORIDAD ALTA)
+// Consumo de API real de Open-Meteo para obtener clima local (útil para el cuidado de las plantas)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export async function getWeatherForPlants(latitude: number = -38.7196, longitude: number = -62.2724) {
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+    if (!res.ok) throw new Error('Error al obtener datos del clima');
+    const data = await res.json();
+    return data.current_weather;
+  } catch (error) {
+    console.error('Error en API externa de clima:', error);
+    return null;
+  }
+}
