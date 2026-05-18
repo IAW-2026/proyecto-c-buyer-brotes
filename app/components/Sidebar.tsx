@@ -3,6 +3,101 @@
 import Link from 'next/link'
 import { Home, Leaf, Heart, Package, Bell, User, Zap, Tag } from 'lucide-react'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+type WeatherData = {
+  temperatura: number
+  viento: number
+  descripcion: string
+  recomiendaRiego: boolean
+  mensaje: string
+  emoji: string
+  color: string
+}
+
+function WeatherWidget() {
+  const [clima, setClima] = useState<WeatherData | null>(null)
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/weather')
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) setClima(data)
+      })
+      .catch(() => {})
+      .finally(() => setCargando(false))
+  }, [])
+
+  if (cargando) {
+    return (
+      <div
+        className="rounded-2xl border border-[#EAF3E6] p-4 animate-pulse"
+        style={{ backgroundColor: 'white' }}
+      >
+        <div className="h-3 rounded-full bg-[#EAF3E6] w-2/3 mb-3" />
+        <div className="h-6 rounded-full bg-[#EAF3E6] w-1/2 mb-2" />
+        <div className="h-3 rounded-full bg-[#EAF3E6] w-full" />
+      </div>
+    )
+  }
+
+  if (!clima) return null
+
+  return (
+    <div
+      className="rounded-2xl border p-4 shadow-sm"
+      style={{
+        backgroundColor: 'white',
+        borderColor: '#EAF3E6'
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <p
+          className="text-xs uppercase tracking-[0.2em] font-semibold"
+          style={{ color: '#7BA05D' }}
+        >
+          Clima · Bahía Blanca
+        </p>
+        <span className="text-lg">{clima.emoji}</span>
+      </div>
+
+      {/* Temperatura */}
+      <div className="flex items-end gap-1 mb-1">
+        <span
+          className="text-3xl font-bold leading-none"
+          style={{ color: '#243B27' }}
+        >
+          {clima.temperatura}°
+        </span>
+        <span className="text-sm mb-0.5" style={{ color: '#7BA05D' }}>C</span>
+      </div>
+      <p className="text-xs mb-3" style={{ color: '#9BA8A0' }}>
+        {clima.descripcion} · Viento {clima.viento} km/h
+      </p>
+
+      {/* Recomendación de riego */}
+      <div
+        className="rounded-xl px-3 py-2.5 flex items-start gap-2"
+        style={{
+          backgroundColor: clima.recomiendaRiego ? '#EAF3E6' : '#F5F2EA',
+          borderLeft: `3px solid ${clima.color}`
+        }}
+      >
+        <span className="text-base leading-none mt-0.5">
+          {clima.recomiendaRiego ? '💧' : '🚫'}
+        </span>
+        <p
+          className="text-xs font-medium leading-relaxed"
+          style={{ color: '#243B27' }}
+        >
+          {clima.mensaje}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -42,6 +137,9 @@ export default function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-4">
+        {/* Widget de clima */}
+        <WeatherWidget />
+
         {/* Ofertas del día */}
         <div className="rounded-2xl border border-[#E07A5F]/20 bg-[#FFF5F2] p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">

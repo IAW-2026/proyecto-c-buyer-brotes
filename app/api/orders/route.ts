@@ -1,23 +1,51 @@
 import { prisma } from '../../lib/prisma'
-import { procesarPago } from '../../lib/api'
+import { procesarPago, getProductoById } from '../../lib/api'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
   const { buyer_id, cart_id } = body
 
+  if (!buyer_id || !cart_id) {
+    return NextResponse.json(
+      { error: 'buyer_id y cart_id son requeridos' },
+      { status: 400 }
+    )
+  }
+
   const cart = await prisma.cart.findUnique({
     where: { id: Number(cart_id) },
     include: { items: true }
   })
 
-  if (!cart || cart.items.length === 0) {
-    return NextResponse.json({ error: 'Carrito vacío o no encontrado' }, { status: 400 })
+  if (!cart) {
+    return NextResponse.json({ error: 'Carrito no encontrado' }, { status: 404 })
+  }
+
+  if (cart.items.length === 0) {
+    return NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 })
+  }
+
+  if (cart.buyer_id !== Number(buyer_id)) {
+    return NextResponse.json({ error: 'El carrito no pertenece a este comprador' }, { status: 403 })
   }
 
   if (!cart.seller_id) {
     return NextResponse.json({ error: 'El carrito no tiene vendedor asignado' }, { status: 400 })
   }
+
+  // Obtener snapshots reales de cada producto antes de crear la orden
+  const itemsConSnapshot = await Promise.all(
+    cart.items.map(async (item) => {
+      const producto = await getProductoById(item.product_id)
+      return {
+        product_id: item.product_id,
+        product_name_snapshot: producto?.nombre ?? `Producto #${item.product_id}`,
+        unit_price_snapshot: item.precio_unitario,
+        cantidad: item.cantidad
+      }
+    })
+  )
 
   const total = cart.items.reduce((acc, item) => {
     return acc + Number(item.precio_unitario) * item.cantidad
@@ -30,12 +58,7 @@ export async function POST(request: NextRequest) {
       total,
       estado: 'pendiente',
       items: {
-        create: cart.items.map(item => ({
-          product_id: item.product_id,
-          product_name_snapshot: `Producto #${item.product_id}`,
-          unit_price_snapshot: item.precio_unitario,
-          cantidad: item.cantidad
-        }))
+        create: itemsConSnapshot
       }
     },
     include: { items: true }

@@ -10,21 +10,25 @@ datasource db {
 }
 
 model Buyer {
-  id            Int       @id @default(autoincrement())
-  email         String    @unique
+  id            Int        @id @default(autoincrement())
+  clerk_user_id String     @unique
   nombre        String?
-  estado        String    @default("activo")
-  created_at    DateTime  @default(now())
+  email         String     @unique
+  direccion     String?
+  estado        String     @default("activo")
+  created_at    DateTime   @default(now())
   deleted_at    DateTime?
   delete_reason String?
   orders        Order[]
   cart          Cart?
+  favorites     Favorite[]
 }
 
 model Cart {
   id         Int        @id @default(autoincrement())
   buyer_id   Int        @unique
-  status     String     @default("active")
+  seller_id  Int?
+  estado     String     @default("active")
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
   buyer      Buyer      @relation(fields: [buyer_id], references: [id])
@@ -32,33 +36,45 @@ model Cart {
 }
 
 model CartItem {
-  id         Int      @id @default(autoincrement())
-  cart_id    Int
-  product_id Int
-  quantity   Int
-  created_at DateTime @default(now())
-  cart       Cart     @relation(fields: [cart_id], references: [id])
+  id              Int      @id @default(autoincrement())
+  cart_id         Int
+  product_id      Int
+  cantidad        Int
+  precio_unitario Decimal
+  created_at      DateTime @default(now())
+  cart            Cart     @relation(fields: [cart_id], references: [id])
 }
 
 model Order {
   id         Int         @id @default(autoincrement())
-  buyer_id   Int
   seller_id  Int
-  total      Float
+  buyer_id   Int
+  total      Decimal
   estado     String      @default("pendiente")
+  payment_id Int?
   created_at DateTime    @default(now())
-  updated_at DateTime    @updatedAt
   buyer      Buyer       @relation(fields: [buyer_id], references: [id])
   items      OrderItem[]
 }
 
 model OrderItem {
-  id                     Int      @id @default(autoincrement())
-  order_id               Int
-  product_id             Int
-  quantity               Int
-  product_name_snapshot  String   // Requisito: Snapshot del nombre
-  product_price_snapshot Float    // Requisito: Snapshot del precio
-  created_at             DateTime @default(now())
-  order                  Order    @relation(fields: [order_id], references: [id])
+  id                    Int      @id @default(autoincrement())
+  order_id              Int
+  product_id            Int
+  product_name_snapshot String
+  unit_price_snapshot   Decimal
+  cantidad              Int
+  created_at            DateTime @default(now())
+  order                 Order    @relation(fields: [order_id], references: [id])
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  buyer_id   Int
+  product_id Int
+  seller_id  Int
+  created_at DateTime @default(now())
+  buyer      Buyer    @relation(fields: [buyer_id], references: [id])
+
+  @@unique([buyer_id, product_id])
 }

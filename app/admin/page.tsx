@@ -3,19 +3,59 @@ import { redirect } from 'next/navigation'
 import { prisma } from '../lib/prisma'
 import AdminPanel from './AdminPanel'
 
-export default async function AdminPage() {
+type Props = {
+  searchParams: Promise<{ q?: string; tab?: string }>
+}
+
+export default async function AdminPage({ searchParams }: Props) {
   const { sessionClaims } = await auth()
   const roles = (sessionClaims?.metadata as any) ?? []
   const esAdmin = Array.isArray(roles) ? roles.includes('admin') : roles === 'admin'
 
   if (!esAdmin) redirect('/')
 
-  const buyersRaw = await prisma.buyer.findMany({
-    include: { orders: true },
-    orderBy: { id: 'desc' }
-  })
+  const { q = '', tab = 'usuarios' } = await searchParams
 
-  // Convertir Decimal a number para poder pasarlo al Client Component
+  // Todas las queries en paralelo — una sola ronda a la DB
+  const [buyersRaw, totalOrdenes, ordenesPorEstado, ingresoRaw, ordenesRecientesRaw] =
+    await Promise.all([
+      prisma.buyer.findMany({
+        where: q
+          ? {
+              OR: [
+                { nombre: { contains: q, mode: 'insensitive' } },
+                { email: { contains: q, mode: 'insensitive' } }
+              ]
+            }
+          : {},
+        include: { orders: true },
+        orderBy: { id: 'desc' }
+      }),
+
+      prisma.order.count(),
+
+      prisma.order.groupBy({
+        by: ['estado'],
+        _count: { estado: true }
+      }),
+
+      prisma.order.aggregate({
+        _sum: { total: true },
+        where: {
+          estado: { in: ['confirmada', 'en_preparacion', 'listo', 'entregada'] }
+        }
+      }),
+
+      prisma.order.findMany({
+        orderBy: { created_at: 'desc' },
+        take: 20,
+        include: {
+          buyer: { select: { nombre: true, email: true } },
+          items: { select: { id: true } }
+        }
+      })
+    ])
+
   const buyers = buyersRaw.map(buyer => ({
     ...buyer,
     created_at: buyer.created_at.toISOString(),
@@ -27,5 +67,28 @@ export default async function AdminPage() {
     }))
   }))
 
-  return <AdminPanel buyersIniciales={buyers} />
+  const reporte = {
+    totalOrdenes,
+    ordenesPorEstado,
+    ingresoTotal: Number(ingresoRaw._sum.total ?? 0),
+    ordenesRecientes: ordenesRecientesRaw.map(o => ({
+      id: o.id,
+      buyer_nombre: o.buyer?.nombre ?? 'Sin nombre',
+      buyer_email: o.buyer?.email ?? '',
+      seller_id: o.seller_id,
+      total: Number(o.total),
+      estado: o.estado,
+      items_count: o.items.length,
+      created_at: o.created_at.toISOString()
+    }))
+  }
+
+  return (
+    <AdminPanel
+      buyersIniciales={buyers}
+      reporte={reporte}
+      initialQuery={q}
+      initialTab={tab as 'usuarios' | 'reporte'}
+    />
+  )
 }
