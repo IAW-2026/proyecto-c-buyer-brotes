@@ -141,18 +141,23 @@ export default function Sidebar() {
         <WeatherWidget />
 
         {/* Ofertas del día */}
-        <div className="rounded-2xl border border-[#E07A5F]/20 bg-[#FFF5F2] p-4 shadow-sm">
+        {/* Productos económicos */}
+        <div className="rounded-2xl border border-[#EAF3E6] bg-[#F5F2EA] p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <Tag size={16} style={{ color: '#E07A5F' }} />
-            <p className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: '#E07A5F' }}>
-              Ofertas del día
+            <Leaf size={16} style={{ color: '#4C6B3D' }} />
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: '#4C6B3D' }}>
+              Menos de $10.000
             </p>
           </div>
           <p className="text-xs mb-3" style={{ color: '#4C6B3D' }}>
-            Hasta 30% en plantas purificadoras y suculentas premium.
+            Plantas accesibles para empezar tu colección verde.
           </p>
-          <Link href="/" className="text-xs font-semibold px-3 py-1 rounded-full text-white inline-block" style={{ backgroundColor: '#E07A5F' }}>
-            Ver ofertas
+          <Link
+            href="/explorar?precio=bajo"
+            className="text-xs font-semibold px-3 py-1 rounded-full text-white inline-block"
+            style={{ backgroundColor: '#4C6B3D' }}
+          >
+            Ver productos
           </Link>
         </div>
 

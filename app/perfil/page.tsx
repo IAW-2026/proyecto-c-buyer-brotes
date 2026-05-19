@@ -62,8 +62,8 @@ export default async function PerfilPage() {
 
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>
-  {buyer.nombre || 'Nombre no disponible'}
-</h2>
+                  {(buyer.nombre ?? 'Usuario')}
+                </h2>
                 <p className="text-sm mt-1" style={{ color: '#7BA05D' }}>
                   Comprador en Brotes
                 </p>

@@ -67,7 +67,7 @@ export default async function Home({
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
               <Link href="/explorar?tipo=suculentas" className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md">
-                <Leaf size={16} /> Suculentas 
+                <Leaf size={16} /> Suculentas
               </Link>
               <Link href="/explorar?tipo=interior" className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md">
                 <Flower2 size={16} /> Plantas de interior
@@ -80,18 +80,23 @@ export default async function Home({
 
           <div className="rounded-[2rem] border border-white/80 bg-[#F8FFF6]/90 p-6 sm:p-8 shadow-[0_40px_80px_rgba(36,59,39,0.08)]">
             <div className="grid gap-6">
+
+              {/* Cactus & Suculentas — reemplaza el bloque de Promociones */}
               <div className="rounded-[1.75rem] bg-[#EAF3E6] p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
                 <p className="text-xs uppercase tracking-[0.24em] font-semibold text-[#4C6B3D] inline-block px-3 py-1 rounded-full bg-white/60">
-                  Promociones
+                  Cactus & Suculentas
                 </p>
                 <h2 className="mt-4 text-2xl font-bold" style={{ color: '#243B27' }}>
-                  Hasta 30% off en plantas purificadoras
+                  Resistentes, únicos y fáciles de cuidar
                 </h2>
                 <p className="mt-3 text-sm" style={{ color: '#4C6B3D' }}>
-                  Aprovechá descuentos exclusivos y envío gratis en pedidos mayores a $30.000.
+                  Explorá nuestra selección de cactus de todo el país, ideales para cualquier espacio.
                 </p>
-                <Link href="/explorar" className="mt-6 inline-flex rounded-full bg-[#4C6B3D] px-4 py-2 text-xs font-semibold text-white transition-all duration-300 hover:brightness-110">
-                  Ver promociones
+                <Link
+                  href="/explorar?tipo=cactus"
+                  className="mt-6 inline-flex rounded-full bg-[#4C6B3D] px-4 py-2 text-xs font-semibold text-white transition-all duration-300 hover:brightness-110"
+                >
+                  Ver cactus
                 </Link>
               </div>
 
