@@ -16,7 +16,6 @@ export default async function AdminPage({ searchParams }: Props) {
 
   const { q = '', tab = 'usuarios' } = await searchParams
 
-  // Todas las queries en paralelo — una sola ronda a la DB
   const [buyersRaw, totalOrdenes, ordenesPorEstado, ingresoRaw, ordenesRecientesRaw] =
     await Promise.all([
       prisma.buyer.findMany({
@@ -58,6 +57,7 @@ export default async function AdminPage({ searchParams }: Props) {
 
   const buyers = buyersRaw.map(buyer => ({
     ...buyer,
+    nombre: buyer.nombre ?? null,
     created_at: buyer.created_at.toISOString(),
     deleted_at: buyer.deleted_at?.toISOString() ?? null,
     orders: buyer.orders.map(order => ({
