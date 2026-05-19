@@ -67,7 +67,7 @@ export default async function Home({
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
               <Link href="/explorar?tipo=suculentas" className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md">
-                <Leaf size={16} /> Suculentas +20%
+                <Leaf size={16} /> Suculentas 
               </Link>
               <Link href="/explorar?tipo=interior" className="rounded-3xl bg-[#F1FAF1] px-4 py-3 text-sm font-semibold text-[#243B27] shadow-sm flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md">
                 <Flower2 size={16} /> Plantas de interior

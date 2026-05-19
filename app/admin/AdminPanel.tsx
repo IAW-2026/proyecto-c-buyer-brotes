@@ -18,7 +18,7 @@ type Order = {
 
 type Buyer = {
   id: number
-  nombre: string
+  nombre: string | null   // ← era: string
   email: string
   estado: string
   created_at: string
@@ -389,6 +389,7 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
                           className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg"
                           style={{ backgroundColor: '#4C6B3D' }}
                         >
+                          {/* CAMBIO 2: avatar con fallback a '?' si nombre es null */}
                           {(buyer.nombre ?? '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -504,7 +505,8 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
                                     alert('Ingresá una justificación para eliminar la cuenta')
                                     return
                                   }
-                                  if (confirm(`¿Seguro que querés eliminar la cuenta de ${buyer.nombre}?`)) {
+                                  /* CAMBIO 3: fallback a 'este usuario' si nombre es null */
+                                  if (confirm(`¿Seguro que querés eliminar la cuenta de ${buyer.nombre ?? 'este usuario'}?`)) {
                                     ejecutarAccion(buyer.id, 'eliminar', motivoEliminar[buyer.id])
                                   }
                                 }}
