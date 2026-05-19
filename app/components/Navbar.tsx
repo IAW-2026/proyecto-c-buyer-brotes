@@ -55,7 +55,7 @@ export default async function Navbar() {
           className="px-4 py-2 rounded-full text-sm font-medium"
           style={{ backgroundColor: '#F5F2EA', color: '#4C6B3D' }}
         >
-          {buyer ? buyer.nombre : 'Iniciar sesión'}
+          {buyer ? (buyer.nombre ?? 'Usuario') : 'Iniciar sesión'}
         </button>
       </div>
     </nav>

@@ -56,14 +56,14 @@ export default async function PerfilPage() {
                   className="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold"
                   style={{ backgroundColor: '#4C6B3D' }}
                 >
-                  {buyer.nombre.charAt(0).toUpperCase()}
+                  {(buyer.nombre ?? '?').charAt(0).toUpperCase()}
                 </div>
               )}
 
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>
-                  {buyer.nombre}
-                </h2>
+  {buyer.nombre || 'Nombre no disponible'}
+</h2>
                 <p className="text-sm mt-1" style={{ color: '#7BA05D' }}>
                   Comprador en Brotes
                 </p>
