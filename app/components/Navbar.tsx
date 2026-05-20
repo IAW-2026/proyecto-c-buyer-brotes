@@ -23,9 +23,13 @@ export default async function Navbar() {
   const cantidadItems = cart?.items.reduce((acc, item) => acc + item.cantidad, 0) ?? 0
 
   return (
-    <nav className="flex items-center justify-between px-8 py-4" style={{ backgroundColor: '#4C6B3D' }}>
+    <nav className="flex items-center justify-between px-8 py-4" style={{ backgroundColor: '#4a6535' }}>
       <Link href="/">
-        <img src="/logo1.png" alt="Brotes logo" className="h-10 cursor-pointer" />
+        <img
+          src="/logo2.png"
+          alt="Brotes logo"
+          className="cursor-pointer object-contain h-10 w-48"
+        />
       </Link>
 
       <div className="flex items-center gap-4">
