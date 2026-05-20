@@ -55,12 +55,23 @@ export default async function Navbar() {
           )}
         </Link>
 
-        <button
-          className="px-4 py-2 rounded-full text-sm font-medium"
-          style={{ backgroundColor: '#F5F2EA', color: '#4C6B3D' }}
-        >
-          {buyer ? (buyer.nombre ?? 'Usuario') : 'Iniciar sesión'}
-        </button>
+        {buyer ? (
+          <Link
+            href="/perfil"
+            className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:brightness-90"
+            style={{ backgroundColor: '#F5F2EA', color: '#4C6B3D' }}
+          >
+            {buyer.nombre ?? 'Mi perfil'}
+          </Link>
+        ) : (
+          <Link
+            href="/sign-in"
+            className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:brightness-90"
+            style={{ backgroundColor: '#F5F2EA', color: '#4C6B3D' }}
+          >
+            Iniciar sesión
+          </Link>
+        )}
       </div>
     </nav>
   )
