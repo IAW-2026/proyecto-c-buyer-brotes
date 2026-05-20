@@ -272,13 +272,7 @@ export default async function ExplorarPage({
                   </Link>
                 ))}
               </div>
-              <Link
-                href="/explorar?orden=asc"
-                className="mt-3 inline-block text-xs font-semibold underline"
-                style={{ color: '#E07A5F' }}
-              >
-                Ver todos los productos →
-              </Link>
+
             </div>
 
             {/* Tarjeta 2: Vivero destacado */}
@@ -339,13 +333,7 @@ export default async function ExplorarPage({
                   </Link>
                 ))}
               </div>
-              <Link
-                href="/explorar#catalogo"
-                className="mt-3 inline-block text-xs font-semibold underline"
-                style={{ color: '#7BA05D' }}
-              >
-                Ver todos →
-              </Link>
+
             </div>
 
           </div>
