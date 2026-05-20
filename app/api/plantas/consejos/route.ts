@@ -54,6 +54,9 @@ Cada texto debe tener entre 15 y 30 palabras. Usá emojis relevantes para cada c
     )
 
     if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}))
+      console.error('Gemini status:', response.status)
+      console.error('Gemini error:', JSON.stringify(errorBody))
       return NextResponse.json({ error: 'Error al consultar la IA' }, { status: 502 })
     }
 
