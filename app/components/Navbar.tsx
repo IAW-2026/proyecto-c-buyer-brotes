@@ -40,7 +40,7 @@ export default async function Navbar() {
             className="px-4 py-2 rounded-full text-sm font-medium"
             style={{ backgroundColor: '#E07A5F', color: 'white' }}
           >
-            Admin
+            Panel de administración
           </Link>
         )}
 

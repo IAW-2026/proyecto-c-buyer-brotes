@@ -18,7 +18,7 @@ type Order = {
 
 type Buyer = {
   id: number
-  nombre: string | null   // ← era: string
+  nombre: string | null
   email: string
   estado: string
   created_at: string
@@ -85,7 +85,6 @@ function formatMoney(value: number) {
 }
 
 // ── Subcomponent: Reporte ─────────────────────────────────────────────────────
-// Sin fetch — recibe datos del Server Component directamente
 
 function ReporteVentas({ reporte }: { reporte: Reporte }) {
   const [filtroEstado, setFiltroEstado] = useState('todos')
@@ -389,7 +388,6 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
                           className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg"
                           style={{ backgroundColor: '#4C6B3D' }}
                         >
-                          {/* CAMBIO 2: avatar con fallback a '?' si nombre es null */}
                           {(buyer.nombre ?? '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -501,18 +499,23 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
                               />
                               <button
                                 onClick={() => {
-                                  if (!motivoEliminar[buyer.id]?.trim()) {
-                                    alert('Ingresá una justificación para eliminar la cuenta')
-                                    return
-                                  }
-                                  /* CAMBIO 3: fallback a 'este usuario' si nombre es null */
                                   if (confirm(`¿Seguro que querés eliminar la cuenta de ${buyer.nombre ?? 'este usuario'}?`)) {
                                     ejecutarAccion(buyer.id, 'eliminar', motivoEliminar[buyer.id])
                                   }
                                 }}
-                                disabled={cargando === buyer.id}
+                                disabled={cargando === buyer.id || !motivoEliminar[buyer.id]?.trim()}
                                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all w-fit"
-                                style={{ backgroundColor: '#E07A5F', color: 'white' }}
+                                style={{
+                                  backgroundColor: (!motivoEliminar[buyer.id]?.trim() || cargando === buyer.id)
+                                    ? '#F5F5F5'
+                                    : '#E07A5F',
+                                  color: (!motivoEliminar[buyer.id]?.trim() || cargando === buyer.id)
+                                    ? '#B9B9B0'
+                                    : 'white',
+                                  cursor: (!motivoEliminar[buyer.id]?.trim() || cargando === buyer.id)
+                                    ? 'not-allowed'
+                                    : 'pointer'
+                                }}
                               >
                                 <Trash2 size={16} />
                                 {cargando === buyer.id ? 'Procesando...' : 'Eliminar cuenta'}

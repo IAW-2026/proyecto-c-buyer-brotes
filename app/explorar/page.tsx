@@ -3,7 +3,7 @@ import { getVendedores } from '../lib/api'
 import Buscador from '../components/Buscador'
 import ImagenPlaceholder from '../components/ImagenPlaceholder'
 import FiltrosExplorar from './FiltrosExplorar'
-import { Leaf, Flower2, Sparkles, MapPin } from 'lucide-react'
+import { Leaf, Flower2, Sparkles, MapPin, AlertTriangle, Store, Zap } from 'lucide-react'
 import { Suspense } from 'react'
 
 type ProductoExtendido = {
@@ -145,7 +145,6 @@ function ExplorarContent({
             ))}
           </div>
 
-          {/* Paginación */}
           {totalPaginas > 1 && (
             <div className="flex items-center justify-center gap-2 mt-10">
               {paginaActual > 1 && (
@@ -203,16 +202,29 @@ export default async function ExplorarPage({
     }))
   )
 
-  const categorias = [
-    { title: 'Suculentas', subtitle: 'Fáciles de cuidar', icon: Flower2 },
-    { title: 'Plantas de interior', subtitle: 'Purifican el aire', icon: Leaf },
-    { title: 'Colecciones nuevas', subtitle: 'Estilo fresco', icon: Sparkles }
-  ]
+  // ── Tarjeta 1: Últimas unidades (stock <= 3) ──
+  // TODO: reemplazar por fetch a Seller App → GET /api/products?sort=stock_asc&limit=3
+  const ultimasUnidades = [...productos]
+    .filter(p => p.stock > 0)
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, 3)
+
+  // ── Tarjeta 2: Vivero destacado (el que más productos tiene) ──
+  // TODO: reemplazar por fetch a Seller App → GET /api/sellers?featured=true
+  const vendedorDestacado = [...vendedores].sort(
+    (a, b) => b.productos.length - a.productos.length
+  )[0]
+
+  // ── Tarjeta 3: Novedades (últimos productos del array, simulando orden de creación) ──
+  // TODO: reemplazar por fetch a Seller App → GET /api/products?sort=created_at_desc&limit=4
+  const novedades = [...productos].slice(-4).reverse()
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#F5F2EA' }}>
       <section className="px-4 sm:px-8 pt-10 pb-8">
-        <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-center">
+        <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-start">
+
+          {/* Hero izquierdo */}
           <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 sm:p-10 shadow-[0_30px_70px_rgba(36,59,39,0.08)]">
             <span className="inline-flex items-center rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
               <Leaf size={16} className="mr-2" /> Explora plantas y viveros
@@ -228,19 +240,114 @@ export default async function ExplorarPage({
             </div>
           </div>
 
+          {/* Columna derecha: 3 tarjetas */}
           <div className="grid gap-4">
-            {categorias.map((categoria) => {
-              const Icon = categoria.icon
-              return (
-                <div key={categoria.title} className="rounded-[2rem] border border-[#EAF3E6] bg-white p-6 shadow-sm">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF3E6] text-[#4C6B3D] mb-4">
-                    <Icon size={22} />
-                  </div>
-                  <h2 className="text-xl font-semibold mb-2" style={{ color: '#243B27' }}>{categoria.title}</h2>
-                  <p className="text-sm" style={{ color: '#4C6B3D' }}>{categoria.subtitle}</p>
+
+            {/* Tarjeta 1: Últimas unidades */}
+            <div className="rounded-[1.75rem] border border-[#EAF3E6] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-[#FFF5F2] flex items-center justify-center">
+                  <AlertTriangle size={15} style={{ color: '#E07A5F' }} />
                 </div>
-              )
-            })}
+                <p className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: '#E07A5F' }}>
+                  Últimas unidades
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                {ultimasUnidades.map(p => (
+                  <Link
+                    key={p.id}
+                    href={`/vendedores/${p.sellerId}`}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl transition-all hover:bg-[#FFF5F2]"
+                  >
+                    <span className="text-sm font-medium truncate" style={{ color: '#243B27' }}>
+                      {p.nombre}
+                    </span>
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full ml-2 shrink-0"
+                      style={{ backgroundColor: '#FFF5F2', color: '#E07A5F' }}
+                    >
+                      {p.stock} left
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              <Link
+                href="/explorar"
+                className="mt-3 inline-block text-xs font-semibold underline"
+                style={{ color: '#E07A5F' }}
+              >
+                Ver todos los productos →
+              </Link>
+            </div>
+
+            {/* Tarjeta 2: Vivero destacado */}
+            <Link
+              href={`/vendedores/${vendedorDestacado.id}`}
+              className="rounded-[1.75rem] border border-[#EAF3E6] bg-[#EAF3E6] p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 block"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+                  <Store size={15} style={{ color: '#4C6B3D' }} />
+                </div>
+                <p className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: '#4C6B3D' }}>
+                  Vivero destacado
+                </p>
+              </div>
+              <h3 className="text-lg font-bold mb-1" style={{ color: '#243B27' }}>
+                {vendedorDestacado.nombre}
+              </h3>
+              <p className="text-sm mb-2" style={{ color: '#4C6B3D' }}>
+                {vendedorDestacado.descripcion}
+              </p>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-xs flex items-center gap-1" style={{ color: '#7BA05D' }}>
+                  <MapPin size={12} /> {vendedorDestacado.ubicacion}
+                </span>
+                <span
+                  className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: 'white', color: '#4C6B3D' }}
+                >
+                  {vendedorDestacado.productos.length} productos
+                </span>
+              </div>
+            </Link>
+
+            {/* Tarjeta 3: Novedades */}
+            <div className="rounded-[1.75rem] border border-[#EAF3E6] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-[#EAF3E6] flex items-center justify-center">
+                  <Zap size={15} style={{ color: '#4C6B3D' }} />
+                </div>
+                <p className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: '#4C6B3D' }}>
+                  Novedades
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                {novedades.map(p => (
+                  <Link
+                    key={p.id}
+                    href={`/vendedores/${p.sellerId}`}
+                    className="flex items-center justify-between px-3 py-2 rounded-xl transition-all hover:bg-[#EAF3E6]"
+                  >
+                    <span className="text-sm font-medium truncate" style={{ color: '#243B27' }}>
+                      {p.nombre}
+                    </span>
+                    <span className="text-sm font-bold shrink-0 ml-2" style={{ color: '#4C6B3D' }}>
+                      ${p.precio.toLocaleString('es-AR')}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              <Link
+                href="/explorar"
+                className="mt-3 inline-block text-xs font-semibold underline"
+                style={{ color: '#7BA05D' }}
+              >
+                Ver todos →
+              </Link>
+            </div>
+
           </div>
         </div>
       </section>
