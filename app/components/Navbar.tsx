@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma'
 import { getBuyerFromClerk } from '../lib/auth'
 import { cancelarOrdenesCaducadas } from '../lib/cancelarOrdenesCaducadas'
 import { auth } from '@clerk/nextjs/server'
+import UserMenu from './UserMenu'
 
 export default async function Navbar() {
   const buyer = await getBuyerFromClerk()
@@ -56,13 +57,7 @@ export default async function Navbar() {
         </Link>
 
         {buyer ? (
-          <Link
-            href="/perfil"
-            className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:brightness-90"
-            style={{ backgroundColor: '#F5F2EA', color: '#4C6B3D' }}
-          >
-            {buyer.nombre ?? 'Mi perfil'}
-          </Link>
+          <UserMenu nombre={buyer.nombre ?? 'Mi perfil'} />
         ) : (
           <Link
             href="/sign-in"
