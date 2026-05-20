@@ -267,13 +267,13 @@ export default async function ExplorarPage({
                       className="text-xs font-bold px-2 py-0.5 rounded-full ml-2 shrink-0"
                       style={{ backgroundColor: '#FFF5F2', color: '#E07A5F' }}
                     >
-                      {p.stock} left
+                      {p.stock} disponibles
                     </span>
                   </Link>
                 ))}
               </div>
               <Link
-                href="/explorar"
+                href="/explorar?orden=asc"
                 className="mt-3 inline-block text-xs font-semibold underline"
                 style={{ color: '#E07A5F' }}
               >
@@ -340,7 +340,7 @@ export default async function ExplorarPage({
                 ))}
               </div>
               <Link
-                href="/explorar"
+                href="/explorar#catalogo"
                 className="mt-3 inline-block text-xs font-semibold underline"
                 style={{ color: '#7BA05D' }}
               >
@@ -352,7 +352,7 @@ export default async function ExplorarPage({
         </div>
       </section>
 
-      <section className="px-4 sm:px-8 pb-16">
+      <section id="catalogo" className="px-4 sm:px-8 pb-16">
         <div className="max-w-6xl mx-auto">
           <Suspense fallback={<div className="text-center py-8">Cargando...</div>}>
             <ExplorarContent
