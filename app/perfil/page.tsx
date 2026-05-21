@@ -3,7 +3,8 @@ import { getBuyerFromClerk } from '../lib/auth'
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { User, Mail, MapPin, Package, Heart, ShoppingCart, Edit } from 'lucide-react'
+import { User, Mail, MapPin, Package, Heart, ShoppingCart, AlertCircle } from 'lucide-react'
+import FormDireccion from '../components/FormDireccion'
 
 export default async function PerfilPage() {
   const buyer = await getBuyerFromClerk()
@@ -11,6 +12,8 @@ export default async function PerfilPage() {
   if (!buyer) redirect('/sign-in')
 
   const clerkUser = await currentUser()
+
+  const tieneDireccion = !!buyer.direccion?.trim()
 
   const [totalPedidos, totalFavoritos, pedidosRecientes] = await Promise.all([
     prisma.order.count({ where: { buyer_id: buyer.id } }),
@@ -37,6 +40,24 @@ export default async function PerfilPage() {
           </h1>
         </div>
 
+        {/* Banner de alerta si no tiene dirección */}
+        {!tieneDireccion && (
+          <div
+            className="mb-6 flex items-start gap-3 rounded-2xl border-2 p-4"
+            style={{ backgroundColor: '#FFF8E5', borderColor: '#F4C842' }}
+          >
+            <AlertCircle size={20} style={{ color: '#E0A85F' }} className="shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-sm" style={{ color: '#92600A' }}>
+                Las compras están deshabilitadas
+              </p>
+              <p className="text-sm mt-0.5" style={{ color: '#92600A' }}>
+                Para realizar compras necesitás completar tu dirección de entrega. Completala a continuación.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
 
           {/* Card de perfil */}
@@ -62,7 +83,7 @@ export default async function PerfilPage() {
 
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>
-                  {(buyer.nombre ?? 'Usuario')}
+                  {buyer.nombre ?? 'Usuario'}
                 </h2>
                 <p className="text-sm mt-1" style={{ color: '#7BA05D' }}>
                   Comprador en Brotes
@@ -75,12 +96,26 @@ export default async function PerfilPage() {
                   <Mail size={16} style={{ color: '#7BA05D' }} />
                   <span className="text-sm" style={{ color: '#243B27' }}>{buyer.email}</span>
                 </div>
-                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: '#F5F2EA' }}>
-                  <MapPin size={16} style={{ color: '#7BA05D' }} />
-                  <span className="text-sm" style={{ color: buyer.direccion ? '#243B27' : '#B9B9B0' }}>
-                    {buyer.direccion || 'Sin dirección cargada'}
-                  </span>
+
+                {/* Dirección — editable */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <MapPin size={16} style={{ color: '#7BA05D' }} />
+                    <span className="text-sm font-semibold" style={{ color: '#243B27' }}>
+                      Dirección de entrega
+                    </span>
+                    {!tieneDireccion && (
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                        style={{ backgroundColor: '#FFF8E5', color: '#E0A85F' }}
+                      >
+                        Requerida
+                      </span>
+                    )}
+                  </div>
+                  <FormDireccion direccionActual={buyer.direccion ?? null} />
                 </div>
+
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: '#F5F2EA' }}>
                   <User size={16} style={{ color: '#7BA05D' }} />
                   <span className="text-sm" style={{ color: '#243B27' }}>

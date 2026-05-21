@@ -23,6 +23,8 @@ export default async function CarritoPage() {
     )
   }
 
+  const tieneDireccion = !!buyer.direccion?.trim()
+
   const cart = await prisma.cart.findFirst({
     where: { buyer_id: buyer.id, estado: 'active' },
     include: { items: true }
@@ -55,7 +57,11 @@ export default async function CarritoPage() {
           </div>
         </div>
 
-        <CartDetails initialCart={cartData} buyerId={buyer.id} />
+        <CartDetails
+          initialCart={cartData}
+          buyerId={buyer.id}
+          tieneDireccion={tieneDireccion}
+        />
       </section>
     </main>
   )

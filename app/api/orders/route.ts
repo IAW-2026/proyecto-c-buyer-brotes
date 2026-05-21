@@ -13,6 +13,22 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Validar que el buyer tiene dirección registrada
+  const buyer = await prisma.buyer.findUnique({
+    where: { id: Number(buyer_id) }
+  })
+
+  if (!buyer) {
+    return NextResponse.json({ error: 'Comprador no encontrado' }, { status: 404 })
+  }
+
+  if (!buyer.direccion?.trim()) {
+    return NextResponse.json(
+      { error: 'Necesitás completar tu dirección de entrega en tu perfil antes de realizar una compra.' },
+      { status: 403 }
+    )
+  }
+
   const cart = await prisma.cart.findUnique({
     where: { id: Number(cart_id) },
     include: { items: true }

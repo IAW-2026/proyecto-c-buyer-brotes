@@ -21,13 +21,14 @@ type Cart = {
 type Props = {
   initialCart: Cart | null
   buyerId: number
+  tieneDireccion: boolean
 }
 
 function formatPrice(value: number) {
   return `$${value.toLocaleString('es-AR')}`
 }
 
-export default function CartDetails({ initialCart, buyerId }: Props) {
+export default function CartDetails({ initialCart, buyerId, tieneDireccion }: Props) {
   const [cart, setCart] = useState<Cart | null>(initialCart)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
   const [mensaje, setMensaje] = useState('')
@@ -176,7 +177,11 @@ export default function CartDetails({ initialCart, buyerId }: Props) {
         </div>
 
         <div className="rounded-3xl bg-[#EAF3E6] p-6 shadow-sm flex flex-col gap-4">
-          <BotonConfirmarCompra cartId={cart.id} buyerId={buyerId} />
+          <BotonConfirmarCompra
+            cartId={cart.id}
+            buyerId={buyerId}
+            tieneDireccion={tieneDireccion}
+          />
           <BotonVaciarCarrito cartId={cart.id} />
         </div>
       </div>

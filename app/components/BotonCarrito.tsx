@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import ModalDireccion from './ModalDireccion'
 
 type Props = {
   productoId: number
@@ -8,13 +9,20 @@ type Props = {
   precio: number
   sellerId: number
   buyerId: number
+  tieneDireccion: boolean
 }
 
-export default function BotonCarrito({ productoId, productNombre, precio, sellerId, buyerId }: Props) {
+export default function BotonCarrito({ productoId, productNombre, precio, sellerId, buyerId, tieneDireccion }: Props) {
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [mostrarModal, setMostrarModal] = useState(false)
 
   const agregarAlCarrito = async () => {
+    if (!tieneDireccion) {
+      setMostrarModal(true)
+      return
+    }
+
     setCargando(true)
     setMensaje('')
 
@@ -49,6 +57,8 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
 
   return (
     <div>
+      {mostrarModal && <ModalDireccion onClose={() => setMostrarModal(false)} />}
+
       <button
         onClick={agregarAlCarrito}
         disabled={cargando}
@@ -57,6 +67,7 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
       >
         {cargando ? 'Agregando...' : 'Agregar al carrito'}
       </button>
+
       {mensaje && (
         <p className="text-xs text-center mt-2" style={{ color: '#4C6B3D' }}>
           {mensaje}

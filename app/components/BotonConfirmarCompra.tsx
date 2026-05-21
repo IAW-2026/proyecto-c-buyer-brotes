@@ -3,18 +3,26 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
+import ModalDireccion from './ModalDireccion'
 
 type Props = {
   cartId: number
   buyerId: number
+  tieneDireccion: boolean
 }
 
-export default function BotonConfirmarCompra({ cartId, buyerId }: Props) {
+export default function BotonConfirmarCompra({ cartId, buyerId, tieneDireccion }: Props) {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [mostrarModal, setMostrarModal] = useState(false)
   const router = useRouter()
 
   const confirmarCompra = async () => {
+    if (!tieneDireccion) {
+      setMostrarModal(true)
+      return
+    }
+
     setCargando(true)
     setError('')
 
@@ -42,11 +50,14 @@ export default function BotonConfirmarCompra({ cartId, buyerId }: Props) {
 
   return (
     <div>
+      {mostrarModal && <ModalDireccion onClose={() => setMostrarModal(false)} />}
+
       {error && (
         <p className="text-sm text-center mb-3" style={{ color: '#E07A5F' }}>
           ⚠️ {error}
         </p>
       )}
+
       <button
         onClick={confirmarCompra}
         disabled={cargando}
