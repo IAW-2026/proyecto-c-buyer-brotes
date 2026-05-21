@@ -23,5 +23,10 @@ export default clerkMiddleware(async (auth, request) => {
 })
 
 export const config = {
-  matcher: ['/((?!_next|api/health|favicon.ico).*)']
+  matcher: [
+    // Excluir archivos estáticos, imágenes y recursos del build de Next.js
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg|.*\\.webp|.*\\.ico|.*\\.css|.*\\.js).*)',
+    // Siempre correr en rutas de API
+    '/(api|trpc)(.*)',
+  ],
 }
