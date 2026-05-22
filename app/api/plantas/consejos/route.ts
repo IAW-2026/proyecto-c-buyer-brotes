@@ -1,4 +1,3 @@
-// app/api/plantas/consejos/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
 function repararJSON(texto: string): string {
@@ -57,7 +56,10 @@ export async function POST(request: NextRequest) {
           messages: [
             {
               role: 'system',
-              content: 'Sos un experto en plantas y jardinería. Respondés ÚNICAMENTE con JSON válido, sin texto extra, sin backticks, sin markdown.'
+              content: `Sos un asistente especializado ÚNICAMENTE en plantas y jardinería de la app Brotes.
+Si el usuario pregunta por algo que NO es una planta, flor, árbol, hierba, cactus, suculenta o cualquier especie vegetal, respondé SOLO con este JSON y nada más:
+{"fuera_de_contexto": true}
+Si SÍ es una planta, respondé SOLO con JSON válido, sin texto extra, sin backticks, sin markdown.`
             },
             {
               role: 'user',
@@ -103,6 +105,14 @@ Cada texto entre 15 y 30 palabras, en español rioplatense.`
         console.error('Error parseando JSON (incluso reparado):', jsonMatch[0])
         return NextResponse.json({ error: 'Respuesta inesperada de la IA' }, { status: 502 })
       }
+    }
+
+    // Respuesta fuera de contexto
+    if (parsed?.fuera_de_contexto) {
+      return NextResponse.json(
+        { error: '🌿 Solo puedo ayudarte con plantas. Probá con "Monstera", "Lavanda" o "Aloe Vera".' },
+        { status: 422 }
+      )
     }
 
     if (!Array.isArray(parsed?.consejos) || parsed.consejos.length === 0) {
