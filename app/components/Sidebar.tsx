@@ -19,15 +19,63 @@ type WeatherData = {
 function WeatherWidget() {
   const [clima, setClima] = useState<WeatherData | null>(null)
   const [cargando, setCargando] = useState(true)
+  const [ciudad, setCiudad] = useState('Tu ubicación')
+  const [permisoDenegado, setPermisoDenegado] = useState(false)
 
   useEffect(() => {
-    fetch('/api/weather')
-      .then(res => res.json())
-      .then(data => {
-        if (!data.error) setClima(data)
-      })
-      .catch(() => {})
-      .finally(() => setCargando(false))
+    // Fallback: usa Bahía Blanca si el usuario deniega o no hay geolocation
+    const fetchClimaFallback = async () => {
+      try {
+        const res = await fetch('/api/weather')
+        const data = await res.json()
+        if (!data.error) {
+          setClima(data)
+          setCiudad('Bahía Blanca')
+        }
+      } catch {}
+      finally { setCargando(false) }
+    }
+
+    if (!navigator.geolocation) {
+      fetchClimaFallback()
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+
+        try {
+          // Obtiene el nombre de la ciudad con Nominatim (gratuito, sin API key)
+          const geoRes = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { 'Accept-Language': 'es' } }
+          )
+          const geoData = await geoRes.json()
+          const nombreCiudad =
+            geoData.address?.city ??
+            geoData.address?.town ??
+            geoData.address?.village ??
+            'Tu ubicación'
+          setCiudad(nombreCiudad)
+
+          // Obtiene el clima con las coordenadas reales
+          const climaRes = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`)
+          const climaData = await climaRes.json()
+          if (!climaData.error) setClima(climaData)
+        } catch {
+          await fetchClimaFallback()
+        } finally {
+          setCargando(false)
+        }
+      },
+      // Si el usuario deniega el permiso → fallback
+      async () => {
+        setPermisoDenegado(true)
+        await fetchClimaFallback()
+      },
+      { timeout: 8000 }
+    )
   }, [])
 
   if (cargando) {
@@ -52,7 +100,7 @@ function WeatherWidget() {
     >
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: '#7BA05D' }}>
-          Clima · Bahía Blanca
+          Clima · {ciudad}
         </p>
         <span className="text-lg">{clima.emoji}</span>
       </div>
@@ -64,6 +112,11 @@ function WeatherWidget() {
       </div>
       <p className="text-xs mb-3" style={{ color: '#9BA8A0' }}>
         {clima.descripcion} · Viento {clima.viento} km/h
+        {permisoDenegado && (
+          <span className="block mt-0.5" style={{ color: '#B9B9B0' }}>
+            (ubicación no disponible, mostrando Bahía Blanca)
+          </span>
+        )}
       </p>
       <div
         className="rounded-xl px-3 py-2.5 flex items-start gap-2"

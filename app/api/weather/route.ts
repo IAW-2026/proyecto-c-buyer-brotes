@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
+// app/api/weather/route.ts
+import { NextResponse, NextRequest } from 'next/server'
 
-// Códigos WMO de clima → https://open-meteo.com/en/docs
 function interpretarClima(codigo: number, temperatura: number): {
   descripcion: string
   recomiendaRiego: boolean
@@ -73,14 +73,15 @@ function interpretarClima(codigo: number, temperatura: number): {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const lat = -38.7196
-    const lon = -62.2724
+    // Acepta coordenadas por query params, si no usa Bahía Blanca como fallback
+    const lat = request.nextUrl.searchParams.get('lat') ?? '-38.7196'
+    const lon = request.nextUrl.searchParams.get('lon') ?? '-62.2724'
 
     const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m&timezone=America%2FArgentina%2FBuenos_Aires`,
-      { next: { revalidate: 1800 } } // cache 30 minutos
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m&timezone=auto`,
+      { next: { revalidate: 1800 } }
     )
 
     if (!res.ok) {
@@ -89,7 +90,6 @@ export async function GET() {
 
     const data = await res.json()
     const { temperature, windspeed, weathercode } = data.current_weather
-
     const interpretacion = interpretarClima(weathercode, temperature)
 
     return NextResponse.json({

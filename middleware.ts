@@ -7,6 +7,8 @@ const isPublicRoute = createRouteMatcher([
   '/vendedores(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/api/weather',
+  '/api/plantas/consejos',
   '/api/approved-payment',
   '/api/rejected-payment',
   '/api/orders/:id/status-update',
