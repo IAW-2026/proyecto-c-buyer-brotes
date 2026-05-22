@@ -1,6 +1,30 @@
 // app/api/plantas/consejos/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
+function repararJSON(texto: string): string {
+  let reparado = texto.trim()
+  let abreBraces = 0
+  let abreCorchetes = 0
+  let enString = false
+  let escape = false
+
+  for (const char of reparado) {
+    if (escape) { escape = false; continue }
+    if (char === '\\' && enString) { escape = true; continue }
+    if (char === '"') { enString = !enString; continue }
+    if (enString) continue
+    if (char === '{') abreBraces++
+    if (char === '}') abreBraces--
+    if (char === '[') abreCorchetes++
+    if (char === ']') abreCorchetes--
+  }
+
+  while (abreCorchetes > 0) { reparado += ']'; abreCorchetes-- }
+  while (abreBraces > 0) { reparado += '}'; abreBraces-- }
+
+  return reparado
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
 
@@ -72,8 +96,13 @@ Cada texto entre 15 y 30 palabras, en español rioplatense.`
     try {
       parsed = JSON.parse(jsonMatch[0])
     } catch (e) {
-      console.error('Error parseando JSON:', jsonMatch[0])
-      return NextResponse.json({ error: 'Respuesta inesperada de la IA' }, { status: 502 })
+      try {
+        const reparado = repararJSON(jsonMatch[0])
+        parsed = JSON.parse(reparado)
+      } catch (e2) {
+        console.error('Error parseando JSON (incluso reparado):', jsonMatch[0])
+        return NextResponse.json({ error: 'Respuesta inesperada de la IA' }, { status: 502 })
+      }
     }
 
     if (!Array.isArray(parsed?.consejos) || parsed.consejos.length === 0) {
