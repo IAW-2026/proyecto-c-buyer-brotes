@@ -40,8 +40,19 @@ export default function BotonConfirmarCompra({ cartId, buyerId, tieneDireccion }
         return
       }
 
-      router.push(`/confirmacion/${data.order_id}`)
-    } catch (error) {
+      // Pago confirmado → página de confirmación
+      if (data.success && data.order_id) {
+        router.push(`/confirmacion/${data.order_id}`)
+        return
+      }
+
+      // Pago siendo procesado (PA no respondió o respondió async) → Mis pedidos
+      if (data.pending && data.order_id) {
+        router.push('/pedidos')
+        return
+      }
+
+    } catch {
       setError('Error de conexión. Intentá de nuevo.')
     } finally {
       setCargando(false)
