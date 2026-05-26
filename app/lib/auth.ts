@@ -13,7 +13,14 @@ export async function getBuyerFromClerk() {
 
   // Si no existe, lo crea (lazy load)
   if (!buyer) {
-    const clerkUser = await currentUser()
+    // ✅ try-catch para que no explote si la API de Clerk está caída
+    let clerkUser = null
+    try {
+      clerkUser = await currentUser()
+    } catch {
+      // Clerk API no disponible, creamos el buyer con datos mínimos
+    }
+
     buyer = await prisma.buyer.create({
       data: {
         clerk_user_id: userId,

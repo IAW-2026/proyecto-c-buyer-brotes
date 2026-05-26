@@ -11,7 +11,13 @@ export default async function PerfilPage() {
 
   if (!buyer) redirect('/sign-in')
 
-  const clerkUser = await currentUser()
+  // ✅ try-catch para que no explote si la API de Clerk está caída
+  let clerkUser = null
+  try {
+    clerkUser = await currentUser()
+  } catch {
+    // Clerk API no disponible, la página carga sin foto de perfil
+  }
 
   const tieneDireccion = !!buyer.direccion?.trim()
 
@@ -64,7 +70,7 @@ export default async function PerfilPage() {
           <div className="rounded-3xl border border-[#EAF3E6] bg-white p-8 shadow-sm">
             <div className="flex flex-col items-center text-center gap-4">
 
-              {/* Avatar */}
+              {/* Avatar — solo si clerkUser está disponible */}
               {clerkUser?.imageUrl ? (
                 <img
                   src={clerkUser.imageUrl}
