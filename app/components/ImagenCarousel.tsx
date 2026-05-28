@@ -24,7 +24,8 @@ export default function ImagenCarousel({ imagenes, alt, intervalo = 3000 }: Prop
   return (
     <img
       src={imagenes[indice]}
-      alt={alt}
+      alt={alt || 'Imagen del carrusel'}
+      aria-label={alt || 'Imagen del carrusel'}
       style={{
         width: '100%',
         height: '100%',

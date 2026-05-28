@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import ModalDireccion from './ModalDireccion'
 
 type Props = {
@@ -73,10 +74,11 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
           {mensaje}
         </p>
       )}
+
       <div className="text-center mt-2">
-        <a href="/carrito" className="text-xs underline" style={{ color: '#7BA05D' }}>
+        <Link href="/carrito" className="text-xs underline" style={{ color: '#7BA05D' }}>
           Ver carrito
-        </a>
+        </Link>
       </div>
     </div>
   )
