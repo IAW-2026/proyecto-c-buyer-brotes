@@ -23,7 +23,7 @@ const sellerHeaders = {
 }
 
 // ── Helpers de mapeo ──────────────────────────────────────────────────────────
-
+ 
 /**
  * Convierte la respuesta de Seller App al tipo Producto interno.
  * Ajustar los campos según la respuesta real de la Seller App al integrar.
@@ -100,21 +100,25 @@ export async function getVendedorById(id: number): Promise<Vendedor | undefined>
   }
 
   try {
-    const [sellerRes, productos] = await Promise.all([
-      fetch(`${SELLER_APP_URL}/api/sellers/${id}`, {
+    const [sellersRes, productos] = await Promise.all([
+      fetch(`${SELLER_APP_URL}/api/sellers`, {
         headers: sellerHeaders,
         next: { revalidate: 60 }
       }),
       getProductosPorVendedor(id)
     ])
 
-    if (!sellerRes.ok) {
-      if (sellerRes.status === 404) return undefined
-      console.error('[api] Error al obtener seller:', sellerRes.status)
+    if (!sellersRes.ok) {
+      console.error('[api] Error al obtener sellers:', sellersRes.status)
       return mockVendedores.find(v => v.id === id)
     }
 
-    const seller = await sellerRes.json()
+    const data = await sellersRes.json()
+    const sellers: any[] = data.sellers ?? data
+    const seller = sellers.find((s: any) => s.id === id)
+
+    if (!seller) return undefined
+
     return mapVendedor(seller, productos)
   } catch (err) {
     console.error('[api] Error en getVendedorById:', err)
