@@ -12,6 +12,19 @@ function getSellerIdFromProduct(product_id: number): number | null {
 }
 
 async function getOrCreateBuyer(buyer_id: number) {
+  const existing = await prisma.buyer.findUnique({ where: { id: buyer_id } })
+
+  if (existing) {
+    // ✅ Validar estado antes de operar
+    if (existing.estado === 'eliminado') {
+      throw new Error('CUENTA_ELIMINADA')
+    }
+    if (existing.estado === 'suspendido') {
+      throw new Error('CUENTA_SUSPENDIDA')
+    }
+    return existing
+  }
+
   return prisma.buyer.upsert({
     where: { id: buyer_id },
     update: {},
@@ -111,7 +124,24 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  await getOrCreateBuyer(Number(buyer_id))
+  // ── Validar estado del buyer ──
+  try {
+    await getOrCreateBuyer(Number(buyer_id))
+  } catch (err: any) {
+    if (err.message === 'CUENTA_ELIMINADA') {
+      return NextResponse.json(
+        { error: 'Tu cuenta fue eliminada. No podés realizar compras.' },
+        { status: 403 }
+      )
+    }
+    if (err.message === 'CUENTA_SUSPENDIDA') {
+      return NextResponse.json(
+        { error: 'Tu cuenta está suspendida. Contactá al soporte para reactivarla.' },
+        { status: 403 }
+      )
+    }
+    throw err
+  }
 
   const sellerIdNumber = Number(seller_id)
 

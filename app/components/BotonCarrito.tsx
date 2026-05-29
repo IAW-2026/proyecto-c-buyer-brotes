@@ -11,12 +11,49 @@ type Props = {
   sellerId: number
   buyerId: number
   tieneDireccion: boolean
+  estadoBuyer: string
 }
 
-export default function BotonCarrito({ productoId, productNombre, precio, sellerId, buyerId, tieneDireccion }: Props) {
+export default function BotonCarrito({ productoId, productNombre, precio, sellerId, buyerId, tieneDireccion, estadoBuyer }: Props) {
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [mostrarModal, setMostrarModal] = useState(false)
+
+  // Cuenta eliminada — bloqueada permanentemente
+  if (estadoBuyer === 'eliminado') {
+    return (
+      <div>
+        <button
+          disabled
+          className="w-full py-2 rounded-full text-sm font-semibold text-white cursor-not-allowed"
+          style={{ backgroundColor: '#B9B9B0' }}
+        >
+          Cuenta eliminada
+        </button>
+        <p className="text-xs text-center mt-2" style={{ color: '#E07A5F' }}>
+          Tu cuenta fue eliminada. No podés realizar compras.
+        </p>
+      </div>
+    )
+  }
+
+  // Cuenta suspendida — bloqueada temporalmente
+  if (estadoBuyer === 'suspendido') {
+    return (
+      <div>
+        <button
+          disabled
+          className="w-full py-2 rounded-full text-sm font-semibold text-white cursor-not-allowed"
+          style={{ backgroundColor: '#B9B9B0' }}
+        >
+          Cuenta suspendida
+        </button>
+        <p className="text-xs text-center mt-2" style={{ color: '#E07A5F' }}>
+          Tu cuenta está suspendida. Contactá al soporte para reactivarla.
+        </p>
+      </div>
+    )
+  }
 
   const agregarAlCarrito = async () => {
     if (!tieneDireccion) {

@@ -16,6 +16,7 @@ export default async function VendedorPage({ params }: Props) {
   const buyer = await getBuyerFromClerk()
 
   const tieneDireccion = !!buyer?.direccion?.trim()
+  const estadoBuyer = buyer?.estado ?? 'activo'
 
   const favoritos = buyer ? await prisma.favorite.findMany({
     where: { buyer_id: buyer.id }
@@ -103,6 +104,7 @@ export default async function VendedorPage({ params }: Props) {
                   sellerId={vendedor.id}
                   buyerId={buyer?.id ?? 0}
                   tieneDireccion={tieneDireccion}
+                  estadoBuyer={estadoBuyer}
                 />
               </div>
             </div>
