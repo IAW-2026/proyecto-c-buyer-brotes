@@ -10,20 +10,21 @@ datasource db {
 }
 
 model Buyer {
-  id            Int        @id @default(autoincrement())
-  clerk_user_id String     @unique
-  nombre        String?
-  email         String     @unique
-  direccion     String?
-  estado        String     @default("activo")
-  created_at    DateTime   @default(now())
-  deleted_at    DateTime?
-  delete_reason String?
-  orders        Order[]
-  cart          Cart?
-  favorites     Favorite[]
-  forumThreads  ForumThread[]   
-  forumReplies  ForumReply[]    
+  id              Int              @id @default(autoincrement())
+  clerk_user_id   String           @unique
+  nombre          String?
+  email           String           @unique
+  direccion       String?
+  estado          String           @default("activo")
+  created_at      DateTime         @default(now())
+  deleted_at      DateTime?
+  delete_reason   String?
+  orders          Order[]
+  cart            Cart?
+  favorites       Favorite[]
+  forumThreads    ForumThread[]
+  forumReplies    ForumReply[]
+  forumReplyLikes ForumReplyLike[] 
 }
 
 model Cart {
@@ -97,11 +98,24 @@ model ForumThread {
 }
 
 model ForumReply {
-  id         Int         @id @default(autoincrement())
+  id         Int              @id @default(autoincrement())
   thread_id  Int
   buyer_id   Int
   contenido  String
-  created_at DateTime    @default(now())
-  thread     ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
-  buyer      Buyer       @relation(fields: [buyer_id], references: [id])
+  created_at DateTime         @default(now())
+  thread     ForumThread      @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  buyer      Buyer            @relation(fields: [buyer_id], references: [id])
+  likes      ForumReplyLike[] 
+}
+
+
+model ForumReplyLike {
+  id         Int        @id @default(autoincrement())
+  reply_id   Int
+  buyer_id   Int
+  created_at DateTime   @default(now())
+  reply      ForumReply @relation(fields: [reply_id], references: [id], onDelete: Cascade)
+  buyer      Buyer      @relation(fields: [buyer_id], references: [id], onDelete: Cascade)
+
+  @@unique([reply_id, buyer_id])
 }

@@ -1,10 +1,12 @@
 import { prisma } from '../lib/prisma'
 import { getBuyerFromClerk } from '../lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { MessageCircle, Leaf } from 'lucide-react'
 import { Suspense } from 'react'
 import BuscadorForo from './BuscadorForo'
 import NuevoHiloModal from './NuevoHiloModal'
+import BotonEliminarForo from './BotonEliminarForo'
 
 type Props = {
   searchParams: Promise<{ q?: string; tag?: string }>
@@ -13,6 +15,11 @@ type Props = {
 export default async function ForoPage({ searchParams }: Props) {
   const { q = '', tag = '' } = await searchParams
   const buyer = await getBuyerFromClerk()
+
+  // Verificar si es admin
+  const { sessionClaims } = await auth()
+  const roles = (sessionClaims?.metadata as any) ?? []
+  const esAdmin = Array.isArray(roles) ? roles.includes('admin') : roles === 'admin'
 
   const threads = await prisma.forumThread.findMany({
     where: {
@@ -89,55 +96,70 @@ export default async function ForoPage({ searchParams }: Props) {
         ) : (
           <div className="grid gap-4">
             {threads.map(thread => (
-              <Link
+              <div
                 key={thread.id}
-                href={`/foro/${thread.id}`}
-                className="block rounded-3xl border border-[#EAF3E6] bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-[#7BA05D]"
+                className="rounded-3xl border border-[#EAF3E6] bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-[#7BA05D]"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex-1 min-w-0">
-                    {thread.planta_tag && (
-                      <span
-                        className="inline-block mb-2 text-xs font-semibold px-3 py-1 rounded-full"
-                        style={{ backgroundColor: '#EAF3E6', color: '#4C6B3D' }}
+                <Link
+                  href={`/foro/${thread.id}`}
+                  className="block p-6"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1 min-w-0">
+                      {thread.planta_tag && (
+                        <span
+                          className="inline-block mb-2 text-xs font-semibold px-3 py-1 rounded-full"
+                          style={{ backgroundColor: '#EAF3E6', color: '#4C6B3D' }}
+                        >
+                          🌿 {thread.planta_tag}
+                        </span>
+                      )}
+                      <h2 className="text-lg font-bold mb-1" style={{ color: '#243B27' }}>
+                        {thread.titulo}
+                      </h2>
+                      <p
+                        className="text-sm leading-relaxed"
+                        style={{
+                          color: '#4C6B3D',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
                       >
-                        🌿 {thread.planta_tag}
-                      </span>
-                    )}
-                    <h2 className="text-lg font-bold mb-1" style={{ color: '#243B27' }}>
-                      {thread.titulo}
-                    </h2>
-                    <p
-                      className="text-sm leading-relaxed"
-                      style={{
-                        color: '#4C6B3D',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {thread.contenido}
-                    </p>
+                        {thread.contenido}
+                      </p>
+                    </div>
+
+                    {/* Contador de respuestas */}
+                    <div className="flex items-center gap-1.5 shrink-0" style={{ color: '#7BA05D' }}>
+                      <MessageCircle size={16} />
+                      <span className="text-sm font-semibold">{thread._count.replies}</span>
+                    </div>
                   </div>
 
-                  {/* Contador de respuestas */}
-                  <div className="flex items-center gap-1.5 shrink-0" style={{ color: '#7BA05D' }}>
-                    <MessageCircle size={16} />
-                    <span className="text-sm font-semibold">{thread._count.replies}</span>
+                  <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: '#B9B9B0' }}>
+                    <span>por {thread.buyer.nombre ?? 'Usuario'}</span>
+                    <span>·</span>
+                    <span>
+                      {new Date(thread.created_at).toLocaleDateString('es-AR', {
+                        day: '2-digit', month: 'short', year: 'numeric'
+                      })}
+                    </span>
                   </div>
-                </div>
+                </Link>
 
-                <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: '#B9B9B0' }}>
-                  <span>por {thread.buyer.nombre ?? 'Usuario'}</span>
-                  <span>·</span>
-                  <span>
-                    {new Date(thread.created_at).toLocaleDateString('es-AR', {
-                      day: '2-digit', month: 'short', year: 'numeric'
-                    })}
-                  </span>
-                </div>
-              </Link>
+                {/* Botón eliminar — solo visible para admin */}
+                {esAdmin && (
+                  <div className="px-6 pb-4 flex justify-end border-t border-[#EAF3E6] pt-3">
+                    <BotonEliminarForo
+                      tipo="thread"
+                      id={thread.id}
+                      redirectTo="/foro"
+                    />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
