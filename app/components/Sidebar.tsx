@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Home, Leaf, Heart, Package, Bell, User, Zap, X, Sparkles } from 'lucide-react'
+import { Home, Leaf, Heart, Package, Bell, User, Zap, X, Sparkles, MessageCircle } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import AsistentePlanta from './AsistenteIA'
@@ -23,7 +23,6 @@ function WeatherWidget() {
   const [permisoDenegado, setPermisoDenegado] = useState(false)
 
   useEffect(() => {
-    // Fallback: usa Bahía Blanca si el usuario deniega o no hay geolocation
     const fetchClimaFallback = async () => {
       try {
         const res = await fetch('/api/weather')
@@ -46,7 +45,6 @@ function WeatherWidget() {
         const { latitude, longitude } = position.coords
 
         try {
-          // Obtiene el nombre de la ciudad con Nominatim (gratuito, sin API key)
           const geoRes = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
             { headers: { 'Accept-Language': 'es' } }
@@ -59,7 +57,6 @@ function WeatherWidget() {
             'Tu ubicación'
           setCiudad(nombreCiudad)
 
-          // Obtiene el clima con las coordenadas reales
           const climaRes = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`)
           const climaData = await climaRes.json()
           if (!climaData.error) setClima(climaData)
@@ -69,7 +66,6 @@ function WeatherWidget() {
           setCargando(false)
         }
       },
-      // Si el usuario deniega el permiso → fallback
       async () => {
         setPermisoDenegado(true)
         await fetchClimaFallback()
@@ -162,6 +158,12 @@ export default function Sidebar() {
           <Link href="/explorar" {...linkEstilo('/explorar')}>
             <Leaf size={18} /> Explorar plantas
           </Link>
+
+          {/* ── NUEVO: Foro ── */}
+          <Link href="/foro" {...linkEstilo('/foro')}>
+            <MessageCircle size={18} /> Foro
+          </Link>
+
           <Link href="/favoritos" {...linkEstilo('/favoritos')}>
             <Heart size={18} /> Favoritos
           </Link>
@@ -270,22 +272,18 @@ export default function Sidebar() {
       {/* ── Panel flotante del asistente ── */}
       {asistenteAbierto && (
         <>
-          {/* Overlay semitransparente */}
           <div
             className="fixed inset-0 z-40"
             style={{ backgroundColor: 'rgba(36,59,39,0.18)' }}
             onClick={() => setAsistenteAbierto(false)}
             aria-hidden="true"
           />
-
-          {/* Panel */}
           <div
             className="fixed left-60 top-24 z-50 w-80 rounded-3xl shadow-2xl border border-[#EAF3E6] overflow-hidden"
             style={{ backgroundColor: 'white' }}
             role="dialog"
             aria-label="Asistente de plantas"
           >
-            {/* Header del panel */}
             <div
               className="flex items-center justify-between px-5 py-4 border-b border-[#EAF3E6]"
               style={{ backgroundColor: '#EAF3E6' }}
@@ -315,8 +313,6 @@ export default function Sidebar() {
                 <X size={16} />
               </button>
             </div>
-
-            {/* Contenido: el componente AsistentePlanta sin su propio header */}
             <div className="p-5">
               <AsistentePlanta />
             </div>

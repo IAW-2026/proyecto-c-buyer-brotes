@@ -5,10 +5,13 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/explorar(.*)',
   '/vendedores(.*)',
+  '/foro(.*)',                        // ← NUEVO: el foro es público (lectura sin login)
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/weather',
   '/api/plantas/consejos',
+  '/api/forum/threads',               // ← NUEVO: GET de hilos sin login
+  '/api/forum/threads/(.*)',          // ← NUEVO: GET de hilo individual sin login
   '/api/approved-payment',
   '/api/rejected-payment',
   '/api/orders/:id/status-update',
@@ -26,9 +29,7 @@ export default clerkMiddleware(async (auth, request) => {
 
 export const config = {
   matcher: [
-    // Excluir archivos estáticos, imágenes y recursos del build de Next.js
     '/((?!_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg|.*\\.webp|.*\\.ico|.*\\.css|.*\\.js).*)',
-    // Siempre correr en rutas de API
     '/(api|trpc)(.*)',
   ],
 }
