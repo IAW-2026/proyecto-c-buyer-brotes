@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { MapPin, X, ArrowRight } from 'lucide-react'
 
@@ -9,17 +11,34 @@ type Props = {
 
 export default function ModalDireccion({ onClose }: Props) {
   const router = useRouter()
+  const overlayRef = useRef<HTMLDivElement>(null)
 
-  return (
+  // Cerrar con Escape
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Solo cerrar si se hizo click exactamente sobre el overlay, no sobre su contenido
+    if (e.target === overlayRef.current) {
+      onClose()
+    }
+  }
+
+  const modal = (
     <div
+      ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
       style={{ backgroundColor: 'rgba(36,59,39,0.45)' }}
-      onClick={onClose}
+      onClick={handleOverlayClick}
     >
       <div
         className="relative w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-[#EAF3E6]"
         style={{ backgroundColor: 'white' }}
-        onClick={e => e.stopPropagation()}
       >
         {/* Botón cerrar */}
         <button
@@ -67,4 +86,7 @@ export default function ModalDireccion({ onClose }: Props) {
       </div>
     </div>
   )
+
+  // Renderizar fuera del árbol DOM del componente padre usando un portal
+  return createPortal(modal, document.body)
 }
