@@ -2,7 +2,7 @@ import { prisma } from '../../lib/prisma'
 import { vendedores } from '../../lib/mock-data'
 import { NextRequest, NextResponse } from 'next/server'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getSellerIdFromProduct(product_id: number): number | null {
   const seller = vendedores.find(v =>
@@ -15,13 +15,8 @@ async function getOrCreateBuyer(buyer_id: number) {
   const existing = await prisma.buyer.findUnique({ where: { id: buyer_id } })
 
   if (existing) {
-    // ✅ Validar estado antes de operar
-    if (existing.estado === 'eliminado') {
-      throw new Error('CUENTA_ELIMINADA')
-    }
-    if (existing.estado === 'suspendido') {
-      throw new Error('CUENTA_SUSPENDIDA')
-    }
+    if (existing.estado === 'eliminado') throw new Error('CUENTA_ELIMINADA')
+    if (existing.estado === 'suspendido') throw new Error('CUENTA_SUSPENDIDA')
     return existing
   }
 
@@ -71,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const { buyer_id, product_id, precio_unitario, cantidad, seller_id, product_name } = body
 
-  // ── Validaciones de campos requeridos ──
+  // ── Validaciones ──────────────────────────────────────────────────────────
   if (!buyer_id || isNaN(Number(buyer_id))) {
     return NextResponse.json(
       { error: 'buyer_id es requerido y debe ser un número' },
@@ -103,19 +98,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Validar que el producto existe ──
+  // ── Validar que el producto existe ────────────────────────────────────────
   const productoExiste = vendedores
     .flatMap(v => v.productos)
     .some(p => p.id === Number(product_id))
 
   if (!productoExiste) {
-    return NextResponse.json(
-      { error: 'El producto no existe' },
-      { status: 404 }
-    )
+    return NextResponse.json({ error: 'El producto no existe' }, { status: 404 })
   }
 
-  // ── Validar que el seller_id corresponde al producto ──
+  // ── Validar que el seller_id corresponde al producto ─────────────────────
   const sellerRealId = getSellerIdFromProduct(Number(product_id))
   if (sellerRealId !== Number(seller_id)) {
     return NextResponse.json(
@@ -124,7 +116,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Validar estado del buyer ──
+  // ── Validar estado del buyer ──────────────────────────────────────────────
   try {
     await getOrCreateBuyer(Number(buyer_id))
   } catch (err: any) {
@@ -145,20 +137,18 @@ export async function POST(request: NextRequest) {
 
   const sellerIdNumber = Number(seller_id)
 
+  // ── Buscar SOLO el carrito activo ─────────────────────────────────────────
+  // IMPORTANTE: nunca reutilizar carritos checked_out o abandoned.
+  // Si no hay carrito activo, se crea uno nuevo desde cero.
   let cart = await prisma.cart.findFirst({
     where: { buyer_id: Number(buyer_id), estado: 'active' },
     include: { items: true }
   })
 
-  if (!cart) {
-    cart = await prisma.cart.findFirst({
-      where: { buyer_id: Number(buyer_id) },
-      include: { items: true }
-    })
-  }
-
   if (cart) {
+    // ── Verificar que el seller coincide con el carrito activo ──────────────
     if (cart.items.length === 0) {
+      // Carrito vacío: actualizar seller si cambió
       if (cart.seller_id !== sellerIdNumber) {
         cart = await prisma.cart.update({
           where: { id: cart.id },
@@ -167,6 +157,7 @@ export async function POST(request: NextRequest) {
         })
       }
     } else {
+      // Carrito con items: inferir seller si no está seteado
       let currentSellerId = cart.seller_id
 
       if (!currentSellerId) {
@@ -177,14 +168,12 @@ export async function POST(request: NextRequest) {
               .filter((id): id is number => id !== null)
           )
         )
-
         if (inferredSellerIds.length !== 1) {
           return NextResponse.json(
             { error: 'El carrito contiene productos de vendedores distintos. Vacialo antes de agregar nuevos productos.' },
             { status: 409 }
           )
         }
-
         currentSellerId = inferredSellerIds[0]
         await prisma.cart.update({
           where: { id: cart.id },
@@ -199,16 +188,9 @@ export async function POST(request: NextRequest) {
         )
       }
     }
-
-    if (cart.estado !== 'active') {
-      cart = await prisma.cart.update({
-        where: { id: cart.id },
-        data: { estado: 'active' },
-        include: { items: true }
-      })
-    }
   }
 
+  // ── Crear carrito nuevo si no existe uno activo ───────────────────────────
   if (!cart) {
     cart = await prisma.cart.create({
       data: {
@@ -220,6 +202,7 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  // ── Agregar o incrementar el item ─────────────────────────────────────────
   const itemExistente = cart.items.find(i => i.product_id === Number(product_id))
 
   if (itemExistente) {
@@ -261,7 +244,6 @@ export async function PATCH(request: NextRequest) {
       { status: 400 }
     )
   }
-
   if (typeof cantidad !== 'number' || cantidad < 0) {
     return NextResponse.json(
       { error: 'cantidad debe ser un número mayor o igual a 0' },
@@ -310,10 +292,7 @@ export async function DELETE(request: NextRequest) {
   })
 
   if (!cart) {
-    return NextResponse.json(
-      { error: 'Carrito no encontrado' },
-      { status: 404 }
-    )
+    return NextResponse.json({ error: 'Carrito no encontrado' }, { status: 404 })
   }
 
   await prisma.cartItem.deleteMany({ where: { cart_id: Number(cart_id) } })

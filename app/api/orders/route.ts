@@ -13,7 +13,7 @@ function getProductName(product_id: number): string | null {
     .find(p => p.id === product_id)?.nombre ?? null
 }
 
-// ── GET /api/orders?buyer_id=X ────────────────────────────────────────────────
+// ── GET /api/orders?buyer_id=X&order_id=Y ─────────────────────────────────────
 // Usado por Payments App para consultar una orden
 
 export async function GET(request: NextRequest) {
@@ -21,36 +21,26 @@ export async function GET(request: NextRequest) {
   const buyer_id = request.nextUrl.searchParams.get('buyer_id')
   const order_id = request.nextUrl.searchParams.get('order_id')
 
-  // Permite acceso autenticado (inter-servicios) o por buyer_id interno
   const isServiceCall = apiKey === SERVICE_API_KEY
 
   if (!isServiceCall && !buyer_id) {
-    return NextResponse.json(
-      { error: 'buyer_id es requerido' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'buyer_id es requerido' }, { status: 400 })
   }
 
   if (order_id) {
-    // Consulta de orden específica (usada por Payments App)
     const order = await prisma.order.findUnique({
       where: { id: Number(order_id) },
       include: { items: true }
     })
-
     if (!order) {
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
     }
-
     return NextResponse.json({
       id: order.id,
       buyer_id: order.buyer_id,
       seller_id: order.seller_id,
       status: order.estado,
-      total: {
-        amount: Number(order.total),
-        currency: 'ARS'
-      },
+      total: { amount: Number(order.total), currency: 'ARS' },
       payment_id: order.payment_id,
       items: order.items.map(i => ({
         product_id: i.product_id,
@@ -63,13 +53,11 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // Listado de órdenes por buyer
   const orders = await prisma.order.findMany({
     where: { buyer_id: Number(buyer_id) },
     include: { items: true },
     orderBy: { created_at: 'desc' }
   })
-
   return NextResponse.json(orders)
 }
 
@@ -80,26 +68,16 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
 
   if (!body) {
-    return NextResponse.json(
-      { error: 'El cuerpo de la request es inválido' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'El cuerpo de la request es inválido' }, { status: 400 })
   }
 
   const { buyer_id, cart_id } = body
 
   if (!buyer_id || isNaN(Number(buyer_id))) {
-    return NextResponse.json(
-      { error: 'buyer_id es requerido y debe ser un número' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'buyer_id es requerido y debe ser un número' }, { status: 400 })
   }
-
   if (!cart_id || isNaN(Number(cart_id))) {
-    return NextResponse.json(
-      { error: 'cart_id es requerido y debe ser un número' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'cart_id es requerido y debe ser un número' }, { status: 400 })
   }
 
   // ── Validar estado del buyer ──────────────────────────────────────────────
@@ -108,21 +86,18 @@ export async function POST(request: NextRequest) {
   if (!buyer) {
     return NextResponse.json({ error: 'Comprador no encontrado' }, { status: 404 })
   }
-
   if (buyer.estado === 'eliminado') {
     return NextResponse.json(
       { error: 'Tu cuenta fue eliminada. No podés realizar compras.' },
       { status: 403 }
     )
   }
-
   if (buyer.estado === 'suspendido') {
     return NextResponse.json(
       { error: 'Tu cuenta está suspendida. Contactá al soporte para reactivarla.' },
       { status: 403 }
     )
   }
-
   if (!buyer.direccion?.trim()) {
     return NextResponse.json(
       { error: 'Necesitás una dirección de entrega para realizar la compra.' },
@@ -130,12 +105,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Obtener el carrito ────────────────────────────────────────────────────
+  // ── Obtener el carrito activo ─────────────────────────────────────────────
   const cart = await prisma.cart.findFirst({
     where: {
       id: Number(cart_id),
       buyer_id: Number(buyer_id),
-      estado: 'active'
+      estado: 'active'          // solo carritos activos, nunca checked_out
     },
     include: { items: true }
   })
@@ -146,14 +121,9 @@ export async function POST(request: NextRequest) {
       { status: 404 }
     )
   }
-
   if (cart.items.length === 0) {
-    return NextResponse.json(
-      { error: 'El carrito está vacío' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 })
   }
-
   if (!cart.seller_id) {
     return NextResponse.json(
       { error: 'El carrito no tiene un vendedor asociado' },
@@ -181,17 +151,21 @@ export async function POST(request: NextRequest) {
       seller_id: cart.seller_id,
       total,
       estado: 'pendiente',
-      items: {
-        create: orderItemsData
-      }
+      items: { create: orderItemsData }
     },
     include: { items: true }
   })
 
-  // ── Marcar el carrito como checked_out ────────────────────────────────────
+  // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
+  // Borramos los items ANTES de cambiar el estado para que si el buyer
+  // vuelve al carrito no vea los productos de la compra anterior.
+  await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
   await prisma.cart.update({
     where: { id: cart.id },
-    data: { estado: 'checked_out' }
+    data: {
+      estado: 'checked_out',
+      seller_id: null           // liberar el seller para la próxima compra
+    }
   })
 
   // ── Intentar llamar a Payments App ────────────────────────────────────────
@@ -217,7 +191,6 @@ export async function POST(request: NextRequest) {
         const paymentData = await paymentRes.json()
 
         if (paymentData.status === 'approved' && paymentData.payment_id) {
-          // Pago aprobado sincrónicamente
           await prisma.order.update({
             where: { id: order.id },
             data: {
@@ -225,50 +198,33 @@ export async function POST(request: NextRequest) {
               payment_id: Number(paymentData.payment_id)
             }
           })
-
-          return NextResponse.json({
-            success: true,
-            order_id: order.id,
-            payment_id: paymentData.payment_id
-          }, { status: 201 })
+          return NextResponse.json(
+            { success: true, order_id: order.id, payment_id: paymentData.payment_id },
+            { status: 201 }
+          )
         }
 
-        // Pago en proceso asincrónico (Payments App lo resolverá via webhook)
-        return NextResponse.json({
-          pending: true,
-          order_id: order.id
-        }, { status: 201 })
+        // Pago asincrónico — Payments App resolverá via webhook
+        return NextResponse.json({ pending: true, order_id: order.id }, { status: 201 })
       }
 
-      // Payments App respondió con error — la orden queda pendiente
       console.error('[orders] Payments App error:', paymentRes.status)
-      return NextResponse.json({
-        pending: true,
-        order_id: order.id
-      }, { status: 201 })
+      return NextResponse.json({ pending: true, order_id: order.id }, { status: 201 })
 
     } catch (err) {
-      // Payments App no disponible — la orden queda pendiente para reintento
       console.error('[orders] Payments App no disponible:', err)
-      return NextResponse.json({
-        pending: true,
-        order_id: order.id
-      }, { status: 201 })
+      return NextResponse.json({ pending: true, order_id: order.id }, { status: 201 })
     }
   }
 
-  // ── Sin Payments App configurada: mock de pago aprobado ───────────────────
-  // Simula aprobación inmediata para desarrollo/testing con mock-data
+  // ── Sin Payments App: mock de pago aprobado (dev/testing) ─────────────────
   await prisma.order.update({
     where: { id: order.id },
     data: {
       estado: 'confirmada',
-      payment_id: Math.floor(Math.random() * 90000) + 10000 // payment_id mock
+      payment_id: Math.floor(Math.random() * 90000) + 10000
     }
   })
 
-  return NextResponse.json({
-    success: true,
-    order_id: order.id
-  }, { status: 201 })
+  return NextResponse.json({ success: true, order_id: order.id }, { status: 201 })
 }
