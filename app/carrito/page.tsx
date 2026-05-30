@@ -61,6 +61,7 @@ export default async function CarritoPage() {
           initialCart={cartData}
           buyerId={buyer.id}
           tieneDireccion={tieneDireccion}
+          sellerId={cart?.seller_id ?? null}
         />
       </section>
     </main>

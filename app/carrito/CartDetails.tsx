@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Leaf, Minus, Plus, ArrowRight } from 'lucide-react'
+import { Leaf, Minus, Plus, ArrowRight, Store } from 'lucide-react'
+import Link from 'next/link'
 import BotonVaciarCarrito from '../components/BotonVaciarCarrito'
 import BotonConfirmarCompra from '../components/BotonConfirmarCompra'
 
@@ -22,13 +23,14 @@ type Props = {
   initialCart: Cart | null
   buyerId: number
   tieneDireccion: boolean
+  sellerId: number | null
 }
 
 function formatPrice(value: number) {
   return `$${value.toLocaleString('es-AR')}`
 }
 
-export default function CartDetails({ initialCart, buyerId, tieneDireccion }: Props) {
+export default function CartDetails({ initialCart, buyerId, tieneDireccion, sellerId }: Props) {
   const [cart, setCart] = useState<Cart | null>(initialCart)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
   const [mensaje, setMensaje] = useState('')
@@ -176,13 +178,25 @@ export default function CartDetails({ initialCart, buyerId, tieneDireccion }: Pr
           <p className="mt-4 text-xs text-[#4C6B3D]">*Los precios son estimados y pueden variar al momento del checkout.</p>
         </div>
 
-        <div className="rounded-3xl bg-[#EAF3E6] p-6 shadow-sm flex flex-col gap-4">
+        <div className="rounded-3xl bg-[#EAF3E6] p-6 shadow-sm flex flex-col gap-3">
           <BotonConfirmarCompra
             cartId={cart.id}
             buyerId={buyerId}
             tieneDireccion={tieneDireccion}
           />
           <BotonVaciarCarrito cartId={cart.id} />
+
+          {/* Botón volver a la tienda */}
+          {sellerId && (
+            <Link
+              href={`/vendedores/${sellerId}`}
+              className="w-full py-3 rounded-full text-sm font-semibold border-2 inline-flex items-center justify-center gap-2 transition-all duration-200 hover:bg-white"
+              style={{ borderColor: '#4C6B3D', color: '#4C6B3D', backgroundColor: 'transparent' }}
+            >
+              <Store size={16} />
+              Volver a la tienda
+            </Link>
+          )}
         </div>
       </div>
     </div>
