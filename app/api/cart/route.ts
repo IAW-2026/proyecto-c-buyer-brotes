@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { buyer_id, product_id, precio_unitario, cantidad, seller_id, product_name } = body
+  const { buyer_id, product_id, precio_unitario, cantidad, seller_id } = body
 
   // ── Validaciones ──────────────────────────────────────────────────────────
   if (!buyer_id || isNaN(Number(buyer_id))) {
@@ -137,18 +137,30 @@ export async function POST(request: NextRequest) {
 
   const sellerIdNumber = Number(seller_id)
 
-  // ── Buscar SOLO el carrito activo ─────────────────────────────────────────
-  // IMPORTANTE: nunca reutilizar carritos checked_out o abandoned.
-  // Si no hay carrito activo, se crea uno nuevo desde cero.
-  let cart = await prisma.cart.findFirst({
-    where: { buyer_id: Number(buyer_id), estado: 'active' },
+  // ── Obtener o crear el carrito del buyer ──────────────────────────────────
+  // El schema tiene @@unique en buyer_id: hay exactamente 1 carrito por buyer.
+  // Si existe (en cualquier estado), lo reactivamos y limpiamos si hace falta.
+  // Si no existe, lo creamos.
+  let cart = await prisma.cart.findUnique({
+    where: { buyer_id: Number(buyer_id) },
     include: { items: true }
   })
 
   if (cart) {
-    // ── Verificar que el seller coincide con el carrito activo ──────────────
-    if (cart.items.length === 0) {
-      // Carrito vacío: actualizar seller si cambió
+    if (cart.estado === 'active') {
+      // ── Carrito activo: validar que el seller coincide ──────────────────
+      if (cart.items.length > 0) {
+        const currentSellerId = cart.seller_id ?? getSellerIdFromProduct(cart.items[0].product_id)
+
+        if (currentSellerId !== null && currentSellerId !== sellerIdNumber) {
+          return NextResponse.json(
+            { error: 'Ya tenés productos de otro vendedor en el carrito' },
+            { status: 409 }
+          )
+        }
+      }
+
+      // Actualizar seller_id si estaba vacío
       if (cart.seller_id !== sellerIdNumber) {
         cart = await prisma.cart.update({
           where: { id: cart.id },
@@ -157,41 +169,22 @@ export async function POST(request: NextRequest) {
         })
       }
     } else {
-      // Carrito con items: inferir seller si no está seteado
-      let currentSellerId = cart.seller_id
+      // ── Carrito checked_out o abandoned: reactivar limpio ───────────────
+      // Los items ya fueron eliminados por /api/orders al confirmar la compra,
+      // pero por seguridad hacemos deleteMany antes de reactivar.
+      await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
 
-      if (!currentSellerId) {
-        const inferredSellerIds = Array.from(
-          new Set(
-            cart.items
-              .map(item => getSellerIdFromProduct(item.product_id))
-              .filter((id): id is number => id !== null)
-          )
-        )
-        if (inferredSellerIds.length !== 1) {
-          return NextResponse.json(
-            { error: 'El carrito contiene productos de vendedores distintos. Vacialo antes de agregar nuevos productos.' },
-            { status: 409 }
-          )
-        }
-        currentSellerId = inferredSellerIds[0]
-        await prisma.cart.update({
-          where: { id: cart.id },
-          data: { seller_id: currentSellerId }
-        })
-      }
-
-      if (currentSellerId !== sellerIdNumber) {
-        return NextResponse.json(
-          { error: 'Ya tenés productos de otro vendedor en el carrito' },
-          { status: 409 }
-        )
-      }
+      cart = await prisma.cart.update({
+        where: { id: cart.id },
+        data: {
+          estado: 'active',
+          seller_id: sellerIdNumber
+        },
+        include: { items: true }
+      })
     }
-  }
-
-  // ── Crear carrito nuevo si no existe uno activo ───────────────────────────
-  if (!cart) {
+  } else {
+    // ── No existe carrito: crear uno nuevo ─────────────────────────────────
     cart = await prisma.cart.create({
       data: {
         buyer_id: Number(buyer_id),
