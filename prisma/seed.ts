@@ -6,6 +6,8 @@ async function main() {
   console.log('🌱 Iniciando seed...')
 
   // ── Limpiar tablas en orden para evitar errores de FK ──
+  await prisma.forumReply.deleteMany()
+  await prisma.forumThread.deleteMany()
   await prisma.orderItem.deleteMany()
   await prisma.order.deleteMany()
   await prisma.cartItem.deleteMany()
@@ -163,7 +165,7 @@ async function main() {
       clerk_user_id: 'seed_buyer_015',
       nombre: 'Ezequiel Mora',
       email: 'ezequiel@brotes.com',
-      direccion: 'Pellegrini 600, Salta',
+      direccion: 'Pellegrini 600, Bach',
       estado: 'activo'
     }
   })
@@ -516,7 +518,7 @@ async function main() {
     }
   })
 
-  // buyer17 (suspendido)
+  // buyer17
   await prisma.order.create({
     data: {
       buyer_id: buyer17.id, seller_id: 3, total: 14000, estado: 'caducada',
@@ -634,6 +636,208 @@ async function main() {
   })
 
   console.log('❤️  Favoritos creados')
+
+  // ── Foro: hilos y respuestas ──────────────────────────────────────────────
+
+  const thread1 = await prisma.forumThread.create({
+    data: {
+      buyer_id: buyer1.id,
+      titulo: '¿Cada cuánto hay que regar una Monstera Deliciosa?',
+      contenido: 'Compré mi primera Monstera hace un mes y no sé bien cada cuánto regarla. A veces la tierra parece seca pero no quiero pasarme. ¿Alguien tiene experiencia con esta planta?',
+      planta_tag: 'Monstera'
+    }
+  })
+
+  await prisma.forumReply.createMany({
+    data: [
+      {
+        thread_id: thread1.id,
+        buyer_id: buyer2.id,
+        contenido: 'Yo riego la mía cada 10 días en verano y cada 15 en invierno. Lo clave es meter el dedo en la tierra: si los primeros 3 cm están secos, es hora de regar.'
+      },
+      {
+        thread_id: thread1.id,
+        buyer_id: buyer10.id,
+        contenido: 'Totalmente de acuerdo con Carlos. Además fijate que el agua escurra bien por los agujeros de la maceta, no conviene que quede encharcada. La Monstera prefiere quedarse un poco seca antes que mojada de más.'
+      },
+      {
+        thread_id: thread1.id,
+        buyer_id: buyer6.id,
+        contenido: 'Una vez por semana en primavera y verano me funciona perfecto. En invierno la reduzco bastante. Y siempre con agua a temperatura ambiente, nunca fría directo de la canilla.'
+      }
+    ]
+  })
+
+  const thread2 = await prisma.forumThread.create({
+    data: {
+      buyer_id: buyer9.id,
+      titulo: '¿Cuál es el mejor sustrato para suculentas y cactus?',
+      contenido: 'Estoy armando una colección de suculentas y quiero saber qué sustrato usan. Vi que algunos mezclan tierra con perlita pero no sé las proporciones exactas.',
+      planta_tag: 'Suculentas'
+    }
+  })
+
+  await prisma.forumReply.createMany({
+    data: [
+      {
+        thread_id: thread2.id,
+        buyer_id: buyer12.id,
+        contenido: 'Yo uso 50% tierra para plantas + 50% perlita y me va bárbaro. El drenaje es clave para que no se pudran las raíces. Si conseguís arena gruesa también podés agregarle un poco.'
+      },
+      {
+        thread_id: thread2.id,
+        buyer_id: buyer15.id,
+        contenido: 'En viveros especializados venden sustrato específico para cactus y suculentas que ya viene listo. Vale un poco más pero ahorra el trabajo de mezclar y el resultado es muy bueno.'
+      },
+      {
+        thread_id: thread2.id,
+        buyer_id: buyer8.id,
+        contenido: 'Yo hago 60% perlita, 30% tierra y 10% arena de río. Desde que uso esa mezcla mis suculentas no tuvieron más problemas de raíces. La clave es que el agua drene rápido.'
+      },
+      {
+        thread_id: thread2.id,
+        buyer_id: buyer19.id,
+        contenido: 'Agreguen también un poco de carbón activado en el fondo de la maceta antes del sustrato. Ayuda a evitar hongos y mantiene el sustrato fresco más tiempo.'
+      }
+    ]
+  })
+
+  const thread3 = await prisma.forumThread.create({
+    data: {
+      buyer_id: buyer6.id,
+      titulo: 'Tips para mantener una Orquídea Phalaenopsis en flor más tiempo',
+      contenido: 'Compré una Orquídea Phalaenopsis que vino con flores hermosas pero ya se me cayeron todas. ¿Cómo hago para que vuelva a florecer? ¿Hay algún truco?',
+      planta_tag: 'Orquídea'
+    }
+  })
+
+  await prisma.forumReply.createMany({
+    data: [
+      {
+        thread_id: thread3.id,
+        buyer_id: buyer16.id,
+        contenido: 'Las orquídeas necesitan un cambio de temperatura entre el día y la noche para reflorecer. Poné la maceta cerca de una ventana donde reciba luz indirecta y asegurate de que de noche baje la temperatura unos grados.'
+      },
+      {
+        thread_id: thread3.id,
+        buyer_id: buyer14.id,
+        contenido: 'Usá fertilizante específico para orquídeas en floración, diluido a la mitad de lo que dice el envase. Una vez por mes en el período de crecimiento es suficiente. Y nada de regar de más, que les hace muy mal.'
+      },
+      {
+        thread_id: thread3.id,
+        buyer_id: buyer11.id,
+        contenido: 'Cuando se caen las flores no cortés el tallo entero. Cortalo justo por encima de un nudo y muchas veces rebrota desde ahí. A mí me funcionó varias veces con la misma planta.'
+      }
+    ]
+  })
+
+  const thread4 = await prisma.forumThread.create({
+    data: {
+      buyer_id: buyer13.id,
+      titulo: '¿Los cactus necesitan abono? ¿Cuál recomiendan?',
+      contenido: 'Tengo varios cactus columnares y globosos y nunca les puse abono. Un amigo me dijo que en primavera conviene fertilizarlos pero no sé qué producto usar ni cada cuánto.',
+      planta_tag: 'Cactus'
+    }
+  })
+
+  await prisma.forumReply.createMany({
+    data: [
+      {
+        thread_id: thread4.id,
+        buyer_id: buyer19.id,
+        contenido: 'Sí conviene abonarlos en primavera y verano que es cuando están en crecimiento activo. Yo uso un fertilizante bajo en nitrógeno (tipo 5-10-10) una vez al mes. En otoño e invierno nada.'
+      },
+      {
+        thread_id: thread4.id,
+        buyer_id: buyer20.id,
+        contenido: 'Los fertilizantes específicos para cactus que venden en viveros son los más seguros. Tienen la proporción de nutrientes ideal para estas plantas. No uses fertilizante común de jardín que tiene mucho nitrógeno y los daña.'
+      }
+    ]
+  })
+
+  const thread5 = await prisma.forumThread.create({
+    data: {
+      buyer_id: buyer11.id,
+      titulo: 'Pothos vs Philodendron: ¿cuál recomiendan para principiantes?',
+      contenido: 'Quiero empezar mi colección de plantas de interior y estoy dudando entre Pothos y Philodendron. ¿Cuál es más fácil de mantener? ¿Cuál crece más rápido?',
+      planta_tag: 'Interior'
+    }
+  })
+
+  await prisma.forumReply.createMany({
+    data: [
+      {
+        thread_id: thread5.id,
+        buyer_id: buyer1.id,
+        contenido: 'Ambas son ideales para principiantes pero el Pothos le gana en resistencia. Aguanta más el olvido de riego, tolera menos luz y crece rapidísimo. Si recién empezás, arrancá con Pothos.'
+      },
+      {
+        thread_id: thread5.id,
+        buyer_id: buyer8.id,
+        contenido: 'El Philodendron Scandens es igual de fácil que el Pothos y tiene un verde más intenso. Yo tengo los dos y la verdad es que no noto gran diferencia en el cuidado. Los dos perdonan mucho.'
+      },
+      {
+        thread_id: thread5.id,
+        buyer_id: buyer18.id,
+        contenido: 'Yo empecé con Pothos dorado y fue la mejor decisión. En seis meses lo tengo colgando por toda la estantería. Le doy agua cada 10 días y no le presto mucha más atención. Ideal para aprender.'
+      }
+    ]
+  })
+
+  const thread6 = await prisma.forumThread.create({
+    data: {
+      buyer_id: buyer20.id,
+      titulo: 'Mi Calathea mueve las hojas de noche, ¿es normal?',
+      contenido: 'Tengo una Calathea Orbifolia y noté que durante el día tiene las hojas caídas y de noche las levanta. Pensé que estaba enferma pero sigue verde y con buen aspecto. ¿A alguien le pasa lo mismo?',
+      planta_tag: 'Calathea'
+    }
+  })
+
+  await prisma.forumReply.createMany({
+    data: [
+      {
+        thread_id: thread6.id,
+        buyer_id: buyer2.id,
+        contenido: '¡Es completamente normal! Las Calatheas son conocidas como "plantas que rezan" justo por eso. Siguen la luz del sol durante el día y se cierran de noche. Es un mecanismo natural de la planta.'
+      },
+      {
+        thread_id: thread6.id,
+        buyer_id: buyer10.id,
+        contenido: 'Sí, es uno de los fenómenos más lindos de las Calatheas. Se llama nictinastia, un movimiento en respuesta a los cambios de luz. Si las hojas se mueven significa que la planta está sana y activa.'
+      }
+    ]
+  })
+
+  const thread7 = await prisma.forumThread.create({
+    data: {
+      buyer_id: buyer7.id,
+      titulo: '¿Cómo propagar una Lavanda en casa?',
+      contenido: 'Tengo una Lavanda que está enorme y quiero sacarle esquejes para regalar. ¿Cuál es la mejor época para hacerlo y qué método funciona mejor?',
+      planta_tag: 'Lavanda'
+    }
+  })
+
+  await prisma.forumReply.createMany({
+    data: [
+      {
+        thread_id: thread7.id,
+        buyer_id: buyer14.id,
+        contenido: 'La primavera es la mejor época. Cortá un esqueje de tallo semileñoso de unos 10 cm, sacale las hojas de abajo y ponelo en sustrato húmedo. En 3-4 semanas debería tener raíces.'
+      },
+      {
+        thread_id: thread7.id,
+        buyer_id: buyer12.id,
+        contenido: 'Yo usé hormona enraizante en polvo y me fue muy bien. Mojás la base del esqueje, lo pasás por la hormona y lo plantás. Acelera mucho el proceso. Lo conseguís en cualquier vivero.'
+      },
+      {
+        thread_id: thread7.id,
+        buyer_id: buyer18.id,
+        contenido: 'También podés probar en agua. Ponés el esqueje en un vasito con agua y cuando salen raíces de 2-3 cm lo trasplantás a tierra. Tarda un poco más pero podés ver el proceso completo.'
+      }
+    ]
+  })
+
+  console.log('💬 Foro: hilos y respuestas creados')
   console.log('')
   console.log('✅ Seed completado exitosamente')
   console.log('')
@@ -658,6 +862,9 @@ async function main() {
   console.log('   agustina@brotes.com     → compradora activa (2 órdenes)')
   console.log('   leandro@brotes.com      → comprador activo (2 órdenes)')
   console.log('   julieta@brotes.com      → compradora activa (2 órdenes)')
+  console.log('')
+  console.log('💬 Foro:')
+  console.log('   7 hilos de debate con 20 respuestas entre usuarios')
 }
 
 main()
