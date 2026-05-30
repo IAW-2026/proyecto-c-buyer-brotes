@@ -84,7 +84,7 @@ export default function BuscadorForo({ tags, initialQ, initialTag }: Props) {
               style={{
                 backgroundColor: tag === t ? '#4C6B3D' : 'white',
                 color: tag === t ? 'white' : '#4C6B3D',
-                borderColor: tag === t ? '#4C6B3D' : '#EAF3E6'
+                borderColor: tag === t ? '#4C6B3D' : '#EAF3E6',
               }}
             >
               🌿 {t}

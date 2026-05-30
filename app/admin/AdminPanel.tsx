@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Search, Trash2, PauseCircle, PlayCircle,
-  ChevronDown, ChevronUp, BarChart2, Users
+  ChevronDown, ChevronUp, BarChart2, Users,
+  ChevronLeft, ChevronRight
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -59,6 +60,9 @@ type Props = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const USUARIOS_POR_PAGINA = 8
+const ORDENES_POR_PAGINA = 10
+
 const estadoColorBadge: Record<string, string> = {
   activo:     '#7BA05D',
   suspendido: '#E07A5F',
@@ -84,19 +88,122 @@ function formatMoney(value: number) {
   return `$${value.toLocaleString('es-AR')}`
 }
 
+// ── Componente de Paginación reutilizable ─────────────────────────────────────
+
+function Paginacion({
+  paginaActual,
+  totalPaginas,
+  onChange,
+}: {
+  paginaActual: number
+  totalPaginas: number
+  onChange: (pagina: number) => void
+}) {
+  if (totalPaginas <= 1) return null
+
+  const inicio = Math.max(1, paginaActual - 2)
+  const fin = Math.min(totalPaginas, inicio + 4)
+  const paginas = Array.from({ length: fin - inicio + 1 }, (_, i) => inicio + i)
+
+  return (
+    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-[#EAF3E6]">
+      <button
+        onClick={() => onChange(paginaActual - 1)}
+        disabled={paginaActual === 1}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-all hover:bg-[#EAF3E6] disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ borderColor: '#7BA05D', color: '#7BA05D' }}
+      >
+        <ChevronLeft size={15} />
+        Anterior
+      </button>
+
+      <div className="flex items-center gap-1">
+        {inicio > 1 && (
+          <>
+            <button
+              onClick={() => onChange(1)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
+              style={{ backgroundColor: 'white', color: '#4C6B3D', border: '2px solid #EAF3E6' }}
+            >
+              1
+            </button>
+            {inicio > 2 && (
+              <span className="w-8 h-8 flex items-center justify-center text-sm" style={{ color: '#B9B9B0' }}>…</span>
+            )}
+          </>
+        )}
+
+        {paginas.map((num) => (
+          <button
+            key={num}
+            onClick={() => onChange(num)}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
+            style={{
+              backgroundColor: num === paginaActual ? '#4C6B3D' : 'white',
+              color: num === paginaActual ? 'white' : '#4C6B3D',
+              border: '2px solid',
+              borderColor: num === paginaActual ? '#4C6B3D' : '#EAF3E6',
+            }}
+          >
+            {num}
+          </button>
+        ))}
+
+        {fin < totalPaginas && (
+          <>
+            {fin < totalPaginas - 1 && (
+              <span className="w-8 h-8 flex items-center justify-center text-sm" style={{ color: '#B9B9B0' }}>…</span>
+            )}
+            <button
+              onClick={() => onChange(totalPaginas)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
+              style={{ backgroundColor: 'white', color: '#4C6B3D', border: '2px solid #EAF3E6' }}
+            >
+              {totalPaginas}
+            </button>
+          </>
+        )}
+      </div>
+
+      <button
+        onClick={() => onChange(paginaActual + 1)}
+        disabled={paginaActual === totalPaginas}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-all hover:bg-[#EAF3E6] disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ borderColor: '#7BA05D', color: '#7BA05D' }}
+      >
+        Siguiente
+        <ChevronRight size={15} />
+      </button>
+    </div>
+  )
+}
+
 // ── Subcomponent: Reporte ─────────────────────────────────────────────────────
 
 function ReporteVentas({ reporte }: { reporte: Reporte }) {
   const [filtroEstado, setFiltroEstado] = useState('todos')
+  const [paginaOrdenes, setPaginaOrdenes] = useState(1)
 
   const ordenesFiltradas = filtroEstado === 'todos'
     ? reporte.ordenesRecientes
     : reporte.ordenesRecientes.filter(o => o.estado === filtroEstado)
 
+  const totalPaginasOrdenes = Math.ceil(ordenesFiltradas.length / ORDENES_POR_PAGINA)
+  const ordenesPagina = ordenesFiltradas.slice(
+    (paginaOrdenes - 1) * ORDENES_POR_PAGINA,
+    paginaOrdenes * ORDENES_POR_PAGINA
+  )
+
   const estados = [
     'todos',
     ...Array.from(new Set(reporte.ordenesRecientes.map(o => o.estado)))
   ]
+
+  // Resetear página cuando cambia el filtro
+  const handleFiltroEstado = (estado: string) => {
+    setFiltroEstado(estado)
+    setPaginaOrdenes(1)
+  }
 
   return (
     <div className="grid gap-6">
@@ -148,7 +255,7 @@ function ReporteVentas({ reporte }: { reporte: Reporte }) {
         {estados.map(e => (
           <button
             key={e}
-            onClick={() => setFiltroEstado(e)}
+            onClick={() => handleFiltroEstado(e)}
             className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
             style={{
               backgroundColor: filtroEstado === e ? '#4C6B3D' : '#EAF3E6',
@@ -162,20 +269,28 @@ function ReporteVentas({ reporte }: { reporte: Reporte }) {
 
       {/* Tabla de órdenes */}
       <div className="rounded-3xl border border-[#EAF3E6] bg-white shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#EAF3E6]">
-          <h2 className="font-bold" style={{ color: '#243B27' }}>Órdenes recientes</h2>
-          <p className="text-sm" style={{ color: '#7BA05D' }}>
-            Últimas 20 órdenes del sistema
-          </p>
+        <div className="px-6 py-4 border-b border-[#EAF3E6] flex items-center justify-between">
+          <div>
+            <h2 className="font-bold" style={{ color: '#243B27' }}>Órdenes recientes</h2>
+            <p className="text-sm" style={{ color: '#7BA05D' }}>
+              {ordenesFiltradas.length} orden{ordenesFiltradas.length !== 1 ? 'es' : ''}
+              {filtroEstado !== 'todos' && ` con estado "${filtroEstado}"`}
+            </p>
+          </div>
+          {totalPaginasOrdenes > 1 && (
+            <span className="text-xs" style={{ color: '#B9B9B0' }}>
+              Página {paginaOrdenes} de {totalPaginasOrdenes}
+            </span>
+          )}
         </div>
 
-        {ordenesFiltradas.length === 0 ? (
+        {ordenesPagina.length === 0 ? (
           <div className="p-8 text-center" style={{ color: '#B9B9B0' }}>
             No hay órdenes para mostrar
           </div>
         ) : (
           <div className="divide-y divide-[#EAF3E6]">
-            {ordenesFiltradas.map(orden => (
+            {ordenesPagina.map(orden => (
               <div
                 key={orden.id}
                 className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between"
@@ -212,6 +327,17 @@ function ReporteVentas({ reporte }: { reporte: Reporte }) {
             ))}
           </div>
         )}
+
+        {/* Paginación dentro del card */}
+        {totalPaginasOrdenes > 1 && (
+          <div className="px-6 pb-6">
+            <Paginacion
+              paginaActual={paginaOrdenes}
+              totalPaginas={totalPaginasOrdenes}
+              onChange={setPaginaOrdenes}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
@@ -231,6 +357,7 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
   const [motivoEliminar, setMotivoEliminar] = useState<Record<number, string>>({})
   const [vistaEliminados, setVistaEliminados] = useState(false)
   const [cargando, setCargando] = useState<number | null>(null)
+  const [paginaUsuarios, setPaginaUsuarios] = useState(1)
 
   const cambiarTab = (nuevaTab: 'usuarios' | 'reporte') => {
     setTab(nuevaTab)
@@ -242,6 +369,7 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
 
   const aplicarBusqueda = useCallback((valor: string) => {
     setQuery(valor)
+    setPaginaUsuarios(1) // resetear página al buscar
     const params = new URLSearchParams()
     if (valor) params.set('q', valor)
     params.set('tab', tab)
@@ -257,10 +385,24 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
 
   useEffect(() => {
     setBuyers(buyersIniciales)
+    setPaginaUsuarios(1)
   }, [buyersIniciales])
+
+  // Resetear página al cambiar entre vista activos/eliminados
+  const handleVistaEliminados = (val: boolean) => {
+    setVistaEliminados(val)
+    setPaginaUsuarios(1)
+    setExpandido(null)
+  }
 
   const buyersFiltrados = buyers.filter(b =>
     vistaEliminados ? b.estado === 'eliminado' : b.estado !== 'eliminado'
+  )
+
+  const totalPaginasUsuarios = Math.ceil(buyersFiltrados.length / USUARIOS_POR_PAGINA)
+  const buyersPagina = buyersFiltrados.slice(
+    (paginaUsuarios - 1) * USUARIOS_POR_PAGINA,
+    paginaUsuarios * USUARIOS_POR_PAGINA
   )
 
   const ejecutarAccion = async (id: number, accion: string, motivo?: string) => {
@@ -332,7 +474,7 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
           <>
             <div className="mb-6 flex items-center gap-3">
               <button
-                onClick={() => setVistaEliminados(false)}
+                onClick={() => handleVistaEliminados(false)}
                 className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
                 style={{
                   backgroundColor: !vistaEliminados ? '#4C6B3D' : '#EAF3E6',
@@ -342,7 +484,7 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
                 Activos / Suspendidos
               </button>
               <button
-                onClick={() => setVistaEliminados(true)}
+                onClick={() => handleVistaEliminados(true)}
                 className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
                 style={{
                   backgroundColor: vistaEliminados ? '#4C6B3D' : '#EAF3E6',
@@ -374,13 +516,27 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
               </p>
             )}
 
+            {/* Info de paginación */}
+            {buyersFiltrados.length > 0 && (
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm" style={{ color: '#7BA05D' }}>
+                  {buyersFiltrados.length} usuario{buyersFiltrados.length !== 1 ? 's' : ''}
+                </p>
+                {totalPaginasUsuarios > 1 && (
+                  <p className="text-xs" style={{ color: '#B9B9B0' }}>
+                    Página {paginaUsuarios} de {totalPaginasUsuarios}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="grid gap-4">
-              {buyersFiltrados.length === 0 ? (
+              {buyersPagina.length === 0 ? (
                 <div className="text-center py-20 rounded-3xl bg-white border border-[#EAF3E6]">
                   <p style={{ color: '#4C6B3D' }}>No se encontraron usuarios</p>
                 </div>
               ) : (
-                buyersFiltrados.map(buyer => (
+                buyersPagina.map(buyer => (
                   <div key={buyer.id} className="rounded-3xl border border-[#EAF3E6] bg-white shadow-sm overflow-hidden">
                     <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-4">
@@ -529,6 +685,16 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
                 ))
               )}
             </div>
+
+            {/* Paginación de usuarios */}
+            <Paginacion
+              paginaActual={paginaUsuarios}
+              totalPaginas={totalPaginasUsuarios}
+              onChange={(p) => {
+                setPaginaUsuarios(p)
+                setExpandido(null) // cerrar acordeón al cambiar de página
+              }}
+            />
           </>
         )}
       </section>
