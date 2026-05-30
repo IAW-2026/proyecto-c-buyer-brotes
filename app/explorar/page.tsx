@@ -3,7 +3,7 @@ import { getVendedores } from '../lib/api'
 import Buscador from '../components/Buscador'
 import ImagenPlaceholder from '../components/ImagenPlaceholder'
 import FiltrosExplorar from './FiltrosExplorar'
-import { Leaf, Flower2, Sparkles, MapPin, AlertTriangle, Store, Zap } from 'lucide-react'
+import { Leaf, Flower2, Sparkles, MapPin, AlertTriangle, Store, Zap, Heart, MessageCircle, ShieldCheck } from 'lucide-react'
 import { Suspense } from 'react'
 
 type ProductoExtendido = {
@@ -90,75 +90,6 @@ function ExplorarContent({
 
   return (
     <>
-      {/* Banner informativo */}
-      <div className="mb-6 rounded-[1.25rem] border border-[#EAF3E6] bg-white px-7 py-4 flex items-center justify-between gap-6">
-
-        {/* Izquierda — planta + texto */}
-        <div className="flex items-center gap-5 flex-1">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <line x1="24" y1="14" x2="24" y2="40" stroke="#A67C52" strokeWidth="2.5" strokeLinecap="round"/>
-            <path d="M24 28 C24 28 14 22 14 13 C14 13 24 15 24 27" fill="#7BA05D"/>
-            <path d="M24 24 C24 24 34 18 34 9 C34 9 24 9 24 23" fill="#4C6B3D"/>
-          </svg>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-0.5" style={{ color: '#4C6B3D' }}>
-              Más de 230 productos
-            </p>
-            <p className="text-sm font-medium" style={{ color: '#243B27' }}>
-              Plantas de viveros verificados en toda Argentina
-            </p>
-          </div>
-        </div>
-
-        {/* Items */}
-        <div className="flex items-center gap-7 shrink-0">
-
-          <div className="flex items-center gap-2.5">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="16" cy="16" r="15" fill="#EAF3E6"/>
-              <path d="M16 22 C16 22 9 17 9 12 C9 9 11.5 7.5 13.5 8 C14.5 8.3 15.4 9 16 10 C16.6 9 17.5 8.3 18.5 8 C20.5 7.5 23 9 23 12 C23 17 16 22 16 22Z" fill="#E07A5F"/>
-            </svg>
-            <div>
-              <p className="text-xs font-semibold" style={{ color: '#243B27' }}>Favoritos</p>
-              <p className="text-xs" style={{ color: '#7BA05D' }}>Guardá tus plantas</p>
-            </div>
-          </div>
-
-          <div className="w-px self-stretch" style={{ backgroundColor: '#EAF3E6' }} />
-
-          <div className="flex items-center gap-2.5">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="16" cy="16" r="15" fill="#EAF3E6"/>
-              <rect x="9" y="10" width="14" height="10" rx="3" fill="#4C6B3D"/>
-              <path d="M13 20 L11 24" stroke="#4C6B3D" strokeWidth="1.8" strokeLinecap="round"/>
-              <circle cx="14" cy="15" r="1" fill="white"/>
-              <circle cx="18" cy="15" r="1" fill="white"/>
-            </svg>
-            <div>
-              <p className="text-xs font-semibold" style={{ color: '#243B27' }}>Foros</p>
-              <p className="text-xs" style={{ color: '#7BA05D' }}>Charlá con la comunidad</p>
-            </div>
-          </div>
-
-          <div className="w-px self-stretch" style={{ backgroundColor: '#EAF3E6' }} />
-
-          <div className="flex items-center gap-2.5">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="16" cy="16" r="15" fill="#EAF3E6"/>
-              <rect x="10" y="14" width="12" height="8" rx="1.5" fill="#4C6B3D"/>
-              <path d="M10 17 L22 17" stroke="white" strokeWidth="0.8"/>
-              <circle cx="12" cy="22" r="1.8" fill="#243B27"/>
-              <circle cx="20" cy="22" r="1.8" fill="#243B27"/>
-            </svg>
-            <div>
-              <p className="text-xs font-semibold" style={{ color: '#243B27' }}>Pago seguro</p>
-              <p className="text-xs" style={{ color: '#7BA05D' }}>Compra protegida</p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
       <FiltrosExplorar />
 
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -287,20 +218,80 @@ export default async function ExplorarPage({
       <section className="px-4 sm:px-8 pt-10 pb-8">
         <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-start">
 
-          {/* Hero izquierdo */}
-          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 sm:p-10 shadow-[0_30px_70px_rgba(36,59,39,0.08)]">
-            <span className="inline-flex items-center rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
-              <Leaf size={16} className="mr-2" /> Explora plantas y viveros
-            </span>
-            <h1 className="mt-6 text-4xl sm:text-5xl font-bold leading-tight" style={{ color: '#243B27' }}>
-              Encontrá la planta perfecta para tu hogar
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7" style={{ color: '#4C6B3D' }}>
-              Navegá entre plantas seleccionadas, filtrá por estilo y descubrí recomendaciones de viveros de confianza.
-            </p>
-            <div className="mt-8 max-w-lg">
-              <Buscador vendedores={vendedores} />
+          {/* Columna izquierda: hero + banner */}
+          <div className="flex flex-col gap-4">
+
+            {/* Hero */}
+            <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 sm:p-10 shadow-[0_30px_70px_rgba(36,59,39,0.08)]">
+              <span className="inline-flex items-center rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
+                <Leaf size={16} className="mr-2" /> Explora plantas y viveros
+              </span>
+              <h1 className="mt-6 text-4xl sm:text-5xl font-bold leading-tight" style={{ color: '#243B27' }}>
+                Encontrá la planta perfecta para tu hogar
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7" style={{ color: '#4C6B3D' }}>
+                Navegá entre plantas seleccionadas, filtrá por estilo y descubrí recomendaciones de viveros de confianza.
+              </p>
+              <div className="mt-8 max-w-lg">
+                <Buscador vendedores={vendedores} />
+              </div>
             </div>
+
+            {/* Banner informativo */}
+            <div className="rounded-[1.75rem] border border-[#EAF3E6] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-8 h-8 rounded-full bg-[#EAF3E6] flex items-center justify-center shrink-0">
+                  <Leaf size={15} style={{ color: '#4C6B3D' }} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: '#4C6B3D' }}>
+                    Más de 230 productos
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: '#243B27' }}>
+                    Plantas de viveros verificados en toda Argentina
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-0 border-t border-[#EAF3E6] pt-4">
+
+                <div className="flex items-center gap-2.5 flex-1">
+                  <div className="w-8 h-8 rounded-full bg-[#EAF3E6] flex items-center justify-center shrink-0">
+                    <Heart size={14} style={{ color: '#E07A5F' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: '#243B27' }}>Favoritos</p>
+                    <p className="text-xs" style={{ color: '#7BA05D' }}>Guardá tus plantas</p>
+                  </div>
+                </div>
+
+                <div className="w-px self-stretch mx-4" style={{ backgroundColor: '#EAF3E6' }} />
+
+                <div className="flex items-center gap-2.5 flex-1">
+                  <div className="w-8 h-8 rounded-full bg-[#EAF3E6] flex items-center justify-center shrink-0">
+                    <MessageCircle size={14} style={{ color: '#4C6B3D' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: '#243B27' }}>Foros</p>
+                    <p className="text-xs" style={{ color: '#7BA05D' }}>Charlá con la comunidad</p>
+                  </div>
+                </div>
+
+                <div className="w-px self-stretch mx-4" style={{ backgroundColor: '#EAF3E6' }} />
+
+                <div className="flex items-center gap-2.5 flex-1">
+                  <div className="w-8 h-8 rounded-full bg-[#EAF3E6] flex items-center justify-center shrink-0">
+                    <ShieldCheck size={14} style={{ color: '#4C6B3D' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: '#243B27' }}>Pago seguro</p>
+                    <p className="text-xs" style={{ color: '#7BA05D' }}>Compra protegida</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
 
           {/* Columna derecha: 3 tarjetas */}
