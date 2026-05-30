@@ -22,6 +22,8 @@ model Buyer {
   orders        Order[]
   cart          Cart?
   favorites     Favorite[]
+  forumThreads  ForumThread[]   
+  forumReplies  ForumReply[]    
 }
 
 model Cart {
@@ -77,4 +79,29 @@ model Favorite {
   buyer      Buyer    @relation(fields: [buyer_id], references: [id])
 
   @@unique([buyer_id, product_id])
+}
+
+model ForumThread {
+  id         Int          @id @default(autoincrement())
+  buyer_id   Int
+  titulo     String
+  contenido  String
+  planta_tag String?
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+  buyer      Buyer        @relation(fields: [buyer_id], references: [id])
+  replies    ForumReply[]
+
+  @@index([planta_tag])
+  @@index([created_at])
+}
+
+model ForumReply {
+  id         Int         @id @default(autoincrement())
+  thread_id  Int
+  buyer_id   Int
+  contenido  String
+  created_at DateTime    @default(now())
+  thread     ForumThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  buyer      Buyer       @relation(fields: [buyer_id], references: [id])
 }
