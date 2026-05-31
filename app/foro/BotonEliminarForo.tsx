@@ -24,8 +24,8 @@ export default function BotonEliminarForo({ tipo, id, redirectTo }: Props) {
     setCargando(true)
     try {
       const endpoint = tipo === 'thread'
-        ? `/api/admin/forum/threads/${id}`
-        : `/api/admin/forum/replies/${id}`
+        ? `/api/admin/buyers/forum/threads/${id}`
+        : `/api/admin/buyers/forum/replies/${id}`
 
       const res = await fetch(endpoint, { method: 'DELETE' })
       const data = await res.json()
