@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import ModalDireccion from './ModalDireccion'
+import ModalLogin from './ModalLogin'
 
 type Props = {
   productoId: number
@@ -17,7 +18,24 @@ type Props = {
 export default function BotonCarrito({ productoId, productNombre, precio, sellerId, buyerId, tieneDireccion, estadoBuyer }: Props) {
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
-  const [mostrarModal, setMostrarModal] = useState(false)
+  const [mostrarModalDireccion, setMostrarModalDireccion] = useState(false)
+  const [mostrarModalLogin, setMostrarModalLogin] = useState(false)
+
+  // Usuario no logueado
+  if (buyerId === 0) {
+    return (
+      <div>
+        {mostrarModalLogin && <ModalLogin onClose={() => setMostrarModalLogin(false)} />}
+        <button
+          onClick={() => setMostrarModalLogin(true)}
+          className="w-full py-2 rounded-full text-sm font-semibold text-white transition-all hover:brightness-110"
+          style={{ backgroundColor: '#7BA05D' }}
+        >
+          Agregar al carrito
+        </button>
+      </div>
+    )
+  }
 
   // Cuenta eliminada — bloqueada permanentemente
   if (estadoBuyer === 'eliminado') {
@@ -57,7 +75,7 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
 
   const agregarAlCarrito = async () => {
     if (!tieneDireccion) {
-      setMostrarModal(true)
+      setMostrarModalDireccion(true)
       return
     }
 
@@ -95,7 +113,7 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
 
   return (
     <div>
-      {mostrarModal && <ModalDireccion onClose={() => setMostrarModal(false)} />}
+      {mostrarModalDireccion && <ModalDireccion onClose={() => setMostrarModalDireccion(false)} />}
 
       <button
         onClick={agregarAlCarrito}
