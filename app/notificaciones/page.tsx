@@ -3,7 +3,7 @@ import { getBuyerFromClerk } from '../lib/auth'
 import Link from 'next/link'
 import {
   Bell, CheckCircle2, XCircle, Clock3, Truck,
-  Wrench, Package, ArrowRight
+  Wrench, Package, ArrowRight, ShieldAlert, ShieldCheck, ShieldOff
 } from 'lucide-react'
 
 function formatDate(date: Date) {
@@ -20,7 +20,10 @@ function formatDate(date: Date) {
   return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-type Notificacion = {
+// ── Tipos ─────────────────────────────────────────────────────────────────────
+
+type NotifOrden = {
+  kind: 'orden'
   id: string
   titulo: string
   descripcion: string
@@ -29,83 +32,56 @@ type Notificacion = {
   orden_id: number
 }
 
-const configPorTipo: Record<Notificacion['tipo'], {
+type NotifCuenta = {
+  kind: 'cuenta'
+  id: string
+  titulo: string
+  descripcion: string
+  fecha: Date
+  tipo: 'suspendido' | 'eliminado' | 'reactivado'
+}
+
+type Notificacion = NotifOrden | NotifCuenta
+
+// ── Config visual ─────────────────────────────────────────────────────────────
+
+const configOrden: Record<NotifOrden['tipo'], {
   icono: React.ElementType
   bg: string
   iconColor: string
   border: string
   label: string
 }> = {
-  pendiente: {
-    icono: Clock3,
-    bg: '#FFF8E5',
-    iconColor: '#E0A85F',
-    border: '#F4C842',
-    label: 'Pago pendiente'
-  },
-  confirmada: {
-    icono: CheckCircle2,
-    bg: '#EAF3E6',
-    iconColor: '#7BA05D',
-    border: '#7BA05D',
-    label: 'Pago confirmado'
-  },
-  en_preparacion: {
-    icono: Wrench,
-    bg: '#E8F0FF',
-    iconColor: '#5F9BE0',
-    border: '#6B8FD4',
-    label: 'En preparación'
-  },
-  listo: {
-    icono: Truck,
-    bg: '#F3EEFF',
-    iconColor: '#9B7BE0',
-    border: '#A78BFA',
-    label: 'Listo para retirar'
-  },
-  entregada: {
-    icono: Package,
-    bg: '#EAF3E6',
-    iconColor: '#4C6B3D',
-    border: '#4C6B3D',
-    label: 'Entregado'
-  },
-  caducada: {
-    icono: XCircle,
-    bg: '#F5F5F5',
-    iconColor: '#B9B9B0',
-    border: '#D9D9D4',
-    label: 'Pedido caducado'
-  },
+  pendiente:      { icono: Clock3,       bg: '#FFF8E5', iconColor: '#E0A85F', border: '#F4C842', label: 'Pago pendiente' },
+  confirmada:     { icono: CheckCircle2, bg: '#EAF3E6', iconColor: '#7BA05D', border: '#7BA05D', label: 'Pago confirmado' },
+  en_preparacion: { icono: Wrench,       bg: '#E8F0FF', iconColor: '#5F9BE0', border: '#6B8FD4', label: 'En preparación' },
+  listo:          { icono: Truck,        bg: '#F3EEFF', iconColor: '#9B7BE0', border: '#A78BFA', label: 'Listo para retirar' },
+  entregada:      { icono: Package,      bg: '#EAF3E6', iconColor: '#4C6B3D', border: '#4C6B3D', label: 'Entregado' },
+  caducada:       { icono: XCircle,      bg: '#F5F5F5', iconColor: '#B9B9B0', border: '#D9D9D4', label: 'Pedido caducado' },
 }
 
-const mensajePorEstado: Record<Notificacion['tipo'], (id: number) => { titulo: string; descripcion: string }> = {
-  pendiente: (id) => ({
-    titulo: `Pedido #${id} en espera de pago`,
-    descripcion: 'Tu pedido fue registrado y está esperando confirmación de pago.'
-  }),
-  confirmada: (id) => ({
-    titulo: `Pago confirmado para el pedido #${id}`,
-    descripcion: 'Tu pago fue procesado exitosamente. El vendedor fue notificado.'
-  }),
-  en_preparacion: (id) => ({
-    titulo: `Tu pedido #${id} está en preparación`,
-    descripcion: 'El vendedor está preparando tu pedido.'
-  }),
-  listo: (id) => ({
-    titulo: `¡Tu pedido #${id} está listo!`,
-    descripcion: 'Tu pedido está listo para ser retirado o despachado.'
-  }),
-  entregada: (id) => ({
-    titulo: `Pedido #${id} entregado`,
-    descripcion: '¡Tu pedido fue entregado! Esperamos que disfrutes tus plantas.'
-  }),
-  caducada: (id) => ({
-    titulo: `Pedido #${id} caducado`,
-    descripcion: 'El pedido caducó por inactividad o el pago fue rechazado.'
-  }),
+const configCuenta: Record<NotifCuenta['tipo'], {
+  icono: React.ElementType
+  bg: string
+  iconColor: string
+  border: string
+  label: string
+}> = {
+  suspendido: { icono: ShieldAlert, bg: '#FFF5F2', iconColor: '#E07A5F', border: '#E07A5F', label: 'Cuenta suspendida' },
+  eliminado:  { icono: ShieldOff,   bg: '#F5F5F5', iconColor: '#B9B9B0', border: '#D9D9D4', label: 'Cuenta eliminada'  },
+  reactivado: { icono: ShieldCheck, bg: '#EAF3E6', iconColor: '#4C6B3D', border: '#4C6B3D', label: 'Cuenta reactivada' },
 }
+
+const mensajePorEstadoOrden: Record<NotifOrden['tipo'], (id: number) => { titulo: string; descripcion: string }> = {
+  pendiente:      (id) => ({ titulo: `Pedido #${id} en espera de pago`,       descripcion: 'Tu pedido fue registrado y está esperando confirmación de pago.' }),
+  confirmada:     (id) => ({ titulo: `Pago confirmado para el pedido #${id}`, descripcion: 'Tu pago fue procesado exitosamente. El vendedor fue notificado.' }),
+  en_preparacion: (id) => ({ titulo: `Tu pedido #${id} está en preparación`,  descripcion: 'El vendedor está preparando tu pedido.' }),
+  listo:          (id) => ({ titulo: `¡Tu pedido #${id} está listo!`,         descripcion: 'Tu pedido está listo para ser retirado o despachado.' }),
+  entregada:      (id) => ({ titulo: `Pedido #${id} entregado`,               descripcion: '¡Tu pedido fue entregado! Esperamos que disfrutes tus plantas.' }),
+  caducada:       (id) => ({ titulo: `Pedido #${id} caducado`,                descripcion: 'El pedido caducó por inactividad o el pago fue rechazado.' }),
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function NotificacionesPage() {
   const buyer = await getBuyerFromClerk()
@@ -118,27 +94,40 @@ export default async function NotificacionesPage() {
     )
   }
 
-  const orders = await prisma.order.findMany({
-    where: { buyer_id: buyer.id },
-    orderBy: { created_at: 'desc' },
-  })
+  const [orders, accountNotifs] = await Promise.all([
+    prisma.order.findMany({
+      where: { buyer_id: buyer.id },
+      orderBy: { created_at: 'desc' },
+    }),
+    prisma.accountNotification.findMany({
+      where: { buyer_id: buyer.id },
+      orderBy: { created_at: 'desc' },
+    }),
+  ])
 
-  // Generamos una notificación por cada orden según su estado actual
-  const notificaciones: Notificacion[] = orders.map(order => {
-    const tipo = order.estado as Notificacion['tipo']
-    const { titulo, descripcion } = mensajePorEstado[tipo]?.(order.id) ?? {
+  // Construir notificaciones de órdenes
+  const notifOrdenes: NotifOrden[] = orders.map(order => {
+    const tipo = order.estado as NotifOrden['tipo']
+    const { titulo, descripcion } = mensajePorEstadoOrden[tipo]?.(order.id) ?? {
       titulo: `Pedido #${order.id} actualizado`,
       descripcion: `El estado de tu pedido cambió a "${order.estado}".`
     }
-    return {
-      id: `order-${order.id}`,
-      titulo,
-      descripcion,
-      fecha: order.created_at,
-      tipo,
-      orden_id: order.id,
-    }
+    return { kind: 'orden', id: `order-${order.id}`, titulo, descripcion, fecha: order.created_at, tipo, orden_id: order.id }
   })
+
+  // Construir notificaciones de cuenta
+  const notifCuenta: NotifCuenta[] = accountNotifs.map(n => ({
+    kind: 'cuenta',
+    id: `account-${n.id}`,
+    titulo: n.titulo,
+    descripcion: n.mensaje,
+    fecha: n.created_at,
+    tipo: n.tipo as NotifCuenta['tipo'],
+  }))
+
+  // Mezclar y ordenar por fecha descendente
+  const notificaciones: Notificacion[] = [...notifOrdenes, ...notifCuenta]
+    .sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#F5F2EA' }}>
@@ -148,9 +137,7 @@ export default async function NotificacionesPage() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm mb-2" style={{ color: '#7BA05D' }}>Centro de actividad</p>
-            <h1 className="text-4xl font-bold" style={{ color: '#243B27' }}>
-              Notificaciones
-            </h1>
+            <h1 className="text-4xl font-bold" style={{ color: '#243B27' }}>Notificaciones</h1>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
             <Bell size={18} />
@@ -163,7 +150,7 @@ export default async function NotificacionesPage() {
             <Bell size={48} className="mx-auto mb-4" style={{ color: '#B9B9B0' }} />
             <h2 className="text-2xl font-bold mb-2" style={{ color: '#243B27' }}>Sin notificaciones</h2>
             <p className="text-sm text-[#4C6B3D] mb-6">
-              Cuando realices una compra o haya novedades en tus pedidos, las verás acá.
+              Cuando realices una compra o haya novedades en tu cuenta, las verás acá.
             </p>
             <Link
               href="/explorar"
@@ -175,7 +162,48 @@ export default async function NotificacionesPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {notificaciones.map(notif => {
-              const config = configPorTipo[notif.tipo] ?? configPorTipo['pendiente']
+              if (notif.kind === 'cuenta') {
+                const config = configCuenta[notif.tipo]
+                const Icono = config.icono
+
+                return (
+                  <div
+                    key={notif.id}
+                    className="flex items-start gap-4 rounded-2xl border bg-white p-5 shadow-sm"
+                    style={{ borderColor: config.border, borderWidth: '1.5px' }}
+                  >
+                    <div
+                      className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 border"
+                      style={{ backgroundColor: config.bg, borderColor: config.border }}
+                    >
+                      <Icono size={20} style={{ color: config.iconColor }} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-semibold text-sm leading-snug" style={{ color: '#243B27' }}>
+                          {notif.titulo}
+                        </p>
+                        <span className="text-xs shrink-0 mt-0.5" style={{ color: '#B9B9B0' }}>
+                          {formatDate(notif.fecha)}
+                        </span>
+                      </div>
+                      <p className="text-sm mt-1 leading-relaxed" style={{ color: '#4C6B3D' }}>
+                        {notif.descripcion}
+                      </p>
+                      <span
+                        className="inline-block mt-2 text-xs font-semibold px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: config.bg, color: config.iconColor }}
+                      >
+                        {config.label}
+                      </span>
+                    </div>
+                  </div>
+                )
+              }
+
+              // Notificación de orden
+              const config = configOrden[notif.tipo] ?? configOrden['pendiente']
               const Icono = config.icono
 
               return (
@@ -185,18 +213,13 @@ export default async function NotificacionesPage() {
                   className="flex items-start gap-4 rounded-2xl border bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
                   style={{ borderColor: '#EAF3E6' }}
                 >
-                  {/* Ícono */}
                   <div
                     className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 border"
-                    style={{
-                      backgroundColor: config.bg,
-                      borderColor: config.border,
-                    }}
+                    style={{ backgroundColor: config.bg, borderColor: config.border }}
                   >
                     <Icono size={20} style={{ color: config.iconColor }} />
                   </div>
 
-                  {/* Contenido */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                       <p className="font-semibold text-sm leading-snug" style={{ color: '#243B27' }}>
@@ -221,7 +244,6 @@ export default async function NotificacionesPage() {
             })}
           </div>
         )}
-
       </section>
     </main>
   )

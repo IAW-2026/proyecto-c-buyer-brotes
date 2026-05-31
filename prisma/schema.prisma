@@ -10,21 +10,22 @@ datasource db {
 }
 
 model Buyer {
-  id              Int              @id @default(autoincrement())
-  clerk_user_id   String           @unique
-  nombre          String?
-  email           String           @unique
-  direccion       String?
-  estado          String           @default("activo")
-  created_at      DateTime         @default(now())
-  deleted_at      DateTime?
-  delete_reason   String?
-  orders          Order[]
-  cart            Cart?
-  favorites       Favorite[]
-  forumThreads    ForumThread[]
-  forumReplies    ForumReply[]
-  forumReplyLikes ForumReplyLike[] 
+  id                   Int                   @id @default(autoincrement())
+  clerk_user_id        String                @unique
+  nombre               String?
+  email                String                @unique
+  direccion            String?
+  estado               String                @default("activo")
+  created_at           DateTime              @default(now())
+  deleted_at           DateTime?
+  delete_reason        String?
+  orders               Order[]
+  cart                 Cart?
+  favorites            Favorite[]
+  forumThreads         ForumThread[]
+  forumReplies         ForumReply[]
+  forumReplyLikes      ForumReplyLike[]
+  accountNotifications AccountNotification[]
 }
 
 model Cart {
@@ -105,9 +106,8 @@ model ForumReply {
   created_at DateTime         @default(now())
   thread     ForumThread      @relation(fields: [thread_id], references: [id], onDelete: Cascade)
   buyer      Buyer            @relation(fields: [buyer_id], references: [id])
-  likes      ForumReplyLike[] 
+  likes      ForumReplyLike[]
 }
-
 
 model ForumReplyLike {
   id         Int        @id @default(autoincrement())
@@ -118,4 +118,17 @@ model ForumReplyLike {
   buyer      Buyer      @relation(fields: [buyer_id], references: [id], onDelete: Cascade)
 
   @@unique([reply_id, buyer_id])
+}
+
+model AccountNotification {
+  id         Int      @id @default(autoincrement())
+  buyer_id   Int
+  tipo       String   // 'suspendido' | 'eliminado' | 'reactivado'
+  titulo     String
+  mensaje    String
+  leida      Boolean  @default(false)
+  created_at DateTime @default(now())
+  buyer      Buyer    @relation(fields: [buyer_id], references: [id], onDelete: Cascade)
+
+  @@index([buyer_id])
 }

@@ -22,13 +22,25 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const { accion, motivo } = body
 
   const buyer = await prisma.buyer.findUnique({ where: { id: Number(id) } })
-  if (!buyer) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
+  if (!buyer) {
+    return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
+  }
 
   if (accion === 'suspender') {
     await prisma.buyer.update({
       where: { id: Number(id) },
       data: { estado: 'suspendido' }
     })
+
+    await prisma.accountNotification.create({
+      data: {
+        buyer_id: Number(id),
+        tipo: 'suspendido',
+        titulo: 'Tu cuenta fue suspendida',
+        mensaje: 'Un administrador suspendió tu cuenta temporalmente. No podés realizar compras ni publicar en el foro hasta que sea reactivada. Si creés que es un error, contactá al soporte.'
+      }
+    })
+
     return NextResponse.json({ success: true, estado: 'suspendido' })
   }
 
@@ -37,13 +49,27 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       where: { id: Number(id) },
       data: { estado: 'activo' }
     })
+
+    await prisma.accountNotification.create({
+      data: {
+        buyer_id: Number(id),
+        tipo: 'reactivado',
+        titulo: 'Tu cuenta fue reactivada',
+        mensaje: 'Tu cuenta fue reactivada por un administrador. Ya podés volver a realizar compras y participar en el foro normalmente.'
+      }
+    })
+
     return NextResponse.json({ success: true, estado: 'activo' })
   }
 
   if (accion === 'eliminar') {
     if (!motivo) {
-      return NextResponse.json({ error: 'Se requiere una justificación para eliminar' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Se requiere una justificación para eliminar' },
+        { status: 400 }
+      )
     }
+
     await prisma.buyer.update({
       where: { id: Number(id) },
       data: {
@@ -52,6 +78,16 @@ export async function PATCH(request: NextRequest, { params }: Props) {
         delete_reason: motivo
       }
     })
+
+    await prisma.accountNotification.create({
+      data: {
+        buyer_id: Number(id),
+        tipo: 'eliminado',
+        titulo: 'Tu cuenta fue eliminada',
+        mensaje: `Tu cuenta fue eliminada por un administrador. Motivo: ${motivo}`
+      }
+    })
+
     return NextResponse.json({ success: true, estado: 'eliminado' })
   }
 
