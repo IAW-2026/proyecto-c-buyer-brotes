@@ -3,23 +3,24 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
-import ModalDireccion from './ModalDireccion'
+import ModalPerfilIncompleto from './ModalPerfilIncompleto'
 
 type Props = {
   cartId: number
   buyerId: number
+  tieneNombre: boolean
   tieneDireccion: boolean
 }
 
-export default function BotonConfirmarCompra({ cartId, buyerId, tieneDireccion }: Props) {
+export default function BotonConfirmarCompra({ cartId, buyerId, tieneNombre, tieneDireccion }: Props) {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
-  const [mostrarModal, setMostrarModal] = useState(false)
+  const [mostrarModalPerfil, setMostrarModalPerfil] = useState(false)
   const router = useRouter()
 
   const confirmarCompra = async () => {
-    if (!tieneDireccion) {
-      setMostrarModal(true)
+    if (!tieneNombre || !tieneDireccion) {
+      setMostrarModalPerfil(true)
       return
     }
 
@@ -40,13 +41,11 @@ export default function BotonConfirmarCompra({ cartId, buyerId, tieneDireccion }
         return
       }
 
-      // Pago confirmado → página de confirmación
       if (data.success && data.order_id) {
         router.push(`/confirmacion/${data.order_id}`)
         return
       }
 
-      // Pago siendo procesado (PA no respondió o respondió async) → Mis pedidos
       if (data.pending && data.order_id) {
         router.push('/pedidos')
         return
@@ -61,7 +60,13 @@ export default function BotonConfirmarCompra({ cartId, buyerId, tieneDireccion }
 
   return (
     <div>
-      {mostrarModal && <ModalDireccion onClose={() => setMostrarModal(false)} />}
+      {mostrarModalPerfil && (
+        <ModalPerfilIncompleto
+          faltaNombre={!tieneNombre}
+          faltaDireccion={!tieneDireccion}
+          onClose={() => setMostrarModalPerfil(false)}
+        />
+      )}
 
       {error && (
         <p className="text-sm text-center mb-3" style={{ color: '#E07A5F' }}>

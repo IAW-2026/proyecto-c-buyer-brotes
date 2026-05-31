@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Leaf, Minus, Plus, ArrowRight, Store } from 'lucide-react'
+import { Leaf, Minus, Plus, Store } from 'lucide-react'
 import Link from 'next/link'
 import BotonVaciarCarrito from '../components/BotonVaciarCarrito'
 import BotonConfirmarCompra from '../components/BotonConfirmarCompra'
@@ -22,6 +22,7 @@ type Cart = {
 type Props = {
   initialCart: Cart | null
   buyerId: number
+  tieneNombre: boolean
   tieneDireccion: boolean
   sellerId: number | null
 }
@@ -30,7 +31,7 @@ function formatPrice(value: number) {
   return `$${value.toLocaleString('es-AR')}`
 }
 
-export default function CartDetails({ initialCart, buyerId, tieneDireccion, sellerId }: Props) {
+export default function CartDetails({ initialCart, buyerId, tieneNombre, tieneDireccion, sellerId }: Props) {
   const [cart, setCart] = useState<Cart | null>(initialCart)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
   const [mensaje, setMensaje] = useState('')
@@ -63,7 +64,7 @@ export default function CartDetails({ initialCart, buyerId, tieneDireccion, sell
           .filter(item => item.cantidad > 0)
         return { ...prev, items: updatedItems }
       })
-    } catch (error) {
+    } catch {
       setMensaje('Error de conexión')
     } finally {
       setUpdatingId(null)
@@ -168,18 +169,21 @@ export default function CartDetails({ initialCart, buyerId, tieneDireccion, sell
             <span className="font-semibold" style={{ color: '#243B27' }}>{formatPrice(total)}</span>
           </div>
           <div className="flex items-center justify-between py-4">
-            <span className="text-lg font-bold" style={{ color: '#243B27' }}>Total</span>
+            <span className="text-sm" style={{ color: '#243B27' }}>Envío</span>
+            <span className="text-sm text-[#7BA05D]">Gratis</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm" style={{ color: '#243B27' }}>Total estimado</span>
             <span className="text-lg font-bold" style={{ color: '#4C6B3D' }}>{formatPrice(total)}</span>
           </div>
-          <p className="text-xs text-[#4C6B3D]">
-            * Los precios se actualizan automáticamente si el vendedor realiza cambios.
-          </p>
+          <p className="mt-4 text-xs text-[#4C6B3D]">*Los precios son estimados y pueden variar al momento del checkout.</p>
         </div>
 
         <div className="rounded-3xl bg-[#EAF3E6] p-6 shadow-sm flex flex-col gap-3">
           <BotonConfirmarCompra
             cartId={cart.id}
             buyerId={buyerId}
+            tieneNombre={tieneNombre}
             tieneDireccion={tieneDireccion}
           />
           <BotonVaciarCarrito cartId={cart.id} />

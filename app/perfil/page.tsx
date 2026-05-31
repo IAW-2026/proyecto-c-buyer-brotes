@@ -5,13 +5,13 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { User, Mail, MapPin, Package, Heart, ShoppingCart, AlertCircle } from 'lucide-react'
 import FormDireccion from '../components/FormDireccion'
+import FormNombre from '../components/FormNombre'
 
 export default async function PerfilPage() {
   const buyer = await getBuyerFromClerk()
 
   if (!buyer) redirect('/sign-in')
 
-  // ✅ try-catch para que no explote si la API de Clerk está caída
   let clerkUser = null
   try {
     clerkUser = await currentUser()
@@ -19,7 +19,9 @@ export default async function PerfilPage() {
     // Clerk API no disponible, la página carga sin foto de perfil
   }
 
+  const tieneNombre = !!buyer.nombre?.trim()
   const tieneDireccion = !!buyer.direccion?.trim()
+  const perfilCompleto = tieneNombre && tieneDireccion
 
   const [totalPedidos, totalFavoritos, pedidosRecientes] = await Promise.all([
     prisma.order.count({ where: { buyer_id: buyer.id } }),
@@ -46,8 +48,8 @@ export default async function PerfilPage() {
           </h1>
         </div>
 
-        {/* Banner de alerta si no tiene dirección */}
-        {!tieneDireccion && (
+        {/* Banner de alerta si falta nombre o dirección */}
+        {!perfilCompleto && (
           <div
             className="mb-6 flex items-start gap-3 rounded-2xl border-2 p-4"
             style={{ backgroundColor: '#FFF8E5', borderColor: '#F4C842' }}
@@ -58,7 +60,13 @@ export default async function PerfilPage() {
                 Las compras están deshabilitadas
               </p>
               <p className="text-sm mt-0.5" style={{ color: '#92600A' }}>
-                Para realizar compras necesitás completar tu dirección de entrega. Completala a continuación.
+                Para realizar compras necesitás completar{' '}
+                {!tieneNombre && !tieneDireccion
+                  ? 'tu nombre y tu dirección de entrega'
+                  : !tieneNombre
+                  ? 'tu nombre'
+                  : 'tu dirección de entrega'}
+                .
               </p>
             </div>
           </div>
@@ -70,7 +78,7 @@ export default async function PerfilPage() {
           <div className="rounded-3xl border border-[#EAF3E6] bg-white p-8 shadow-sm">
             <div className="flex flex-col items-center text-center gap-4">
 
-              {/* Avatar — solo si clerkUser está disponible */}
+              {/* Avatar */}
               {clerkUser?.imageUrl ? (
                 <img
                   src={clerkUser.imageUrl}
@@ -89,7 +97,7 @@ export default async function PerfilPage() {
 
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: '#243B27' }}>
-                  {buyer.nombre ?? 'Usuario'}
+                  {buyer.nombre ?? 'Sin nombre'}
                 </h2>
                 <p className="text-sm mt-1" style={{ color: '#7BA05D' }}>
                   Comprador en Brotes
@@ -98,9 +106,30 @@ export default async function PerfilPage() {
 
               {/* Info */}
               <div className="w-full grid gap-3 mt-2">
+
+                {/* Email */}
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: '#F5F2EA' }}>
                   <Mail size={16} style={{ color: '#7BA05D' }} />
                   <span className="text-sm" style={{ color: '#243B27' }}>{buyer.email}</span>
+                </div>
+
+                {/* Nombre — editable */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <User size={16} style={{ color: '#7BA05D' }} />
+                    <span className="text-sm font-semibold" style={{ color: '#243B27' }}>
+                      Nombre
+                    </span>
+                    {!tieneNombre && (
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                        style={{ backgroundColor: '#FFF8E5', color: '#E0A85F' }}
+                      >
+                        Requerido
+                      </span>
+                    )}
+                  </div>
+                  <FormNombre nombreActual={buyer.nombre ?? null} />
                 </div>
 
                 {/* Dirección — editable */}
@@ -122,6 +151,7 @@ export default async function PerfilPage() {
                   <FormDireccion direccionActual={buyer.direccion ?? null} />
                 </div>
 
+                {/* Miembro desde */}
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: '#F5F2EA' }}>
                   <User size={16} style={{ color: '#7BA05D' }} />
                   <span className="text-sm" style={{ color: '#243B27' }}>

@@ -13,7 +13,6 @@ export async function getBuyerFromClerk() {
 
   // Si no existe, lo crea (lazy load)
   if (!buyer) {
-    // ✅ try-catch para que no explote si la API de Clerk está caída
     let clerkUser = null
     try {
       clerkUser = await currentUser()
@@ -21,12 +20,19 @@ export async function getBuyerFromClerk() {
       // Clerk API no disponible, creamos el buyer con datos mínimos
     }
 
+    // Intentamos obtener el nombre real, si no lo dejamos null
+    // para que el usuario sea forzado a completarlo en su perfil
+    const nombreReal =
+      clerkUser?.fullName?.trim() ||
+      clerkUser?.firstName?.trim() ||
+      null
+
     buyer = await prisma.buyer.create({
       data: {
         clerk_user_id: userId,
-        nombre: clerkUser?.fullName ?? clerkUser?.firstName ?? 'Usuario',
+        nombre: nombreReal,
         email: clerkUser?.emailAddresses[0]?.emailAddress ?? '',
-        direccion: ''
+        direccion: null
       }
     })
   }

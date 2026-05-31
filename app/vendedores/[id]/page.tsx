@@ -15,6 +15,7 @@ export default async function VendedorPage({ params }: Props) {
   const vendedor = await getVendedorById(Number(id))
   const buyer = await getBuyerFromClerk()
 
+  const tieneNombre = !!buyer?.nombre?.trim()
   const tieneDireccion = !!buyer?.direccion?.trim()
   const estadoBuyer = buyer?.estado ?? 'activo'
 
@@ -103,6 +104,7 @@ export default async function VendedorPage({ params }: Props) {
                   precio={producto.precio}
                   sellerId={vendedor.id}
                   buyerId={buyer?.id ?? 0}
+                  tieneNombre={tieneNombre}
                   tieneDireccion={tieneDireccion}
                   estadoBuyer={estadoBuyer}
                 />

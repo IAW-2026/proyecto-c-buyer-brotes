@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import ModalDireccion from './ModalDireccion'
 import ModalLogin from './ModalLogin'
+import ModalPerfilIncompleto from './ModalPerfilIncompleto'
 
 type Props = {
   productoId: number
@@ -12,16 +12,20 @@ type Props = {
   precio: number
   sellerId: number
   buyerId: number
+  tieneNombre: boolean
   tieneDireccion: boolean
   estadoBuyer: string
 }
 
-export default function BotonCarrito({ productoId, productNombre, precio, sellerId, buyerId, tieneDireccion, estadoBuyer }: Props) {
+export default function BotonCarrito({
+  productoId, productNombre, precio, sellerId, buyerId,
+  tieneNombre, tieneDireccion, estadoBuyer
+}: Props) {
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [mostrarModalDireccion, setMostrarModalDireccion] = useState(false)
   const [mostrarModalLogin, setMostrarModalLogin] = useState(false)
-  const router = useRouter()
+  const [mostrarModalPerfil, setMostrarModalPerfil] = useState(false)
 
   // Usuario no logueado
   if (buyerId === 0) {
@@ -39,15 +43,11 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
     )
   }
 
-  // Cuenta eliminada — bloqueada permanentemente
+  // Cuenta eliminada
   if (estadoBuyer === 'eliminado') {
     return (
       <div>
-        <button
-          disabled
-          className="w-full py-2 rounded-full text-sm font-semibold text-white cursor-not-allowed"
-          style={{ backgroundColor: '#B9B9B0' }}
-        >
+        <button disabled className="w-full py-2 rounded-full text-sm font-semibold text-white cursor-not-allowed" style={{ backgroundColor: '#B9B9B0' }}>
           Cuenta eliminada
         </button>
         <p className="text-xs text-center mt-2" style={{ color: '#E07A5F' }}>
@@ -57,15 +57,11 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
     )
   }
 
-  // Cuenta suspendida — bloqueada temporalmente
+  // Cuenta suspendida
   if (estadoBuyer === 'suspendido') {
     return (
       <div>
-        <button
-          disabled
-          className="w-full py-2 rounded-full text-sm font-semibold text-white cursor-not-allowed"
-          style={{ backgroundColor: '#B9B9B0' }}
-        >
+        <button disabled className="w-full py-2 rounded-full text-sm font-semibold text-white cursor-not-allowed" style={{ backgroundColor: '#B9B9B0' }}>
           Cuenta suspendida
         </button>
         <p className="text-xs text-center mt-2" style={{ color: '#E07A5F' }}>
@@ -76,8 +72,9 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
   }
 
   const agregarAlCarrito = async () => {
-    if (!tieneDireccion) {
-      setMostrarModalDireccion(true)
+    // Falta nombre o dirección → modal de perfil incompleto
+    if (!tieneNombre || !tieneDireccion) {
+      setMostrarModalPerfil(true)
       return
     }
 
@@ -105,9 +102,8 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
       }
 
       setMensaje('✅ Agregado al carrito')
-      router.refresh()
 
-    } catch (error) {
+    } catch {
       setMensaje('❌ Error de conexión')
     } finally {
       setCargando(false)
@@ -117,6 +113,13 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
   return (
     <div>
       {mostrarModalDireccion && <ModalDireccion onClose={() => setMostrarModalDireccion(false)} />}
+      {mostrarModalPerfil && (
+        <ModalPerfilIncompleto
+          faltaNombre={!tieneNombre}
+          faltaDireccion={!tieneDireccion}
+          onClose={() => setMostrarModalPerfil(false)}
+        />
+      )}
 
       <button
         onClick={agregarAlCarrito}

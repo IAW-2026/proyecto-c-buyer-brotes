@@ -14,16 +14,35 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Body inválido' }, { status: 400 })
   }
 
-  const { direccion } = body
+  const { nombre, direccion } = body
 
-  if (typeof direccion !== 'string' || !direccion.trim()) {
-    return NextResponse.json({ error: 'La dirección no puede estar vacía' }, { status: 400 })
+  // ── Actualizar nombre ─────────────────────────────────────────────────────
+  if (nombre !== undefined) {
+    if (typeof nombre !== 'string' || !nombre.trim()) {
+      return NextResponse.json({ error: 'El nombre no puede estar vacío' }, { status: 400 })
+    }
+
+    const updated = await prisma.buyer.update({
+      where: { id: buyer.id },
+      data: { nombre: nombre.trim() }
+    })
+
+    return NextResponse.json({ success: true, nombre: updated.nombre })
   }
 
-  const updated = await prisma.buyer.update({
-    where: { id: buyer.id },
-    data: { direccion: direccion.trim() }
-  })
+  // ── Actualizar dirección ──────────────────────────────────────────────────
+  if (direccion !== undefined) {
+    if (typeof direccion !== 'string' || !direccion.trim()) {
+      return NextResponse.json({ error: 'La dirección no puede estar vacía' }, { status: 400 })
+    }
 
-  return NextResponse.json({ success: true, direccion: updated.direccion })
+    const updated = await prisma.buyer.update({
+      where: { id: buyer.id },
+      data: { direccion: direccion.trim() }
+    })
+
+    return NextResponse.json({ success: true, direccion: updated.direccion })
+  }
+
+  return NextResponse.json({ error: 'Nada que actualizar' }, { status: 400 })
 }
