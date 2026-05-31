@@ -167,11 +167,13 @@ export default function CartDetails({ initialCart, buyerId, tieneDireccion, sell
             <span className="text-sm" style={{ color: '#243B27' }}>Subtotal</span>
             <span className="font-semibold" style={{ color: '#243B27' }}>{formatPrice(total)}</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm" style={{ color: '#243B27' }}>Total estimado</span>
+          <div className="flex items-center justify-between py-4">
+            <span className="text-lg font-bold" style={{ color: '#243B27' }}>Total</span>
             <span className="text-lg font-bold" style={{ color: '#4C6B3D' }}>{formatPrice(total)}</span>
           </div>
-          <p className="mt-4 text-xs text-[#4C6B3D]">* Una vez confirmada tu compra, te avisamos cuando el pedido esté listo para retirar.</p>
+          <p className="text-xs text-[#4C6B3D]">
+            * Los precios se actualizan automáticamente si el vendedor realiza cambios.
+          </p>
         </div>
 
         <div className="rounded-3xl bg-[#EAF3E6] p-6 shadow-sm flex flex-col gap-3">
@@ -182,7 +184,6 @@ export default function CartDetails({ initialCart, buyerId, tieneDireccion, sell
           />
           <BotonVaciarCarrito cartId={cart.id} />
 
-          {/* Botón volver a la tienda */}
           {sellerId && (
             <Link
               href={`/vendedores/${sellerId}`}

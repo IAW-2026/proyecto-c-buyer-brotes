@@ -2,7 +2,8 @@ import { prisma } from '../lib/prisma'
 import Link from 'next/link'
 import CartDetails from './CartDetails'
 import { vendedores } from '../lib/mock-data'
-import { ShoppingCart, Truck } from 'lucide-react'
+import { getProductoById } from '../lib/api'
+import { ShoppingCart, Store } from 'lucide-react'
 import { getBuyerFromClerk } from '../lib/auth'
 
 function getProductName(productId: number) {
@@ -30,6 +31,30 @@ export default async function CarritoPage() {
     include: { items: true }
   })
 
+  // ── Refresco de precios ───────────────────────────────────────────────────
+  // Para cada item del carrito, consultamos el precio actual del producto.
+  // Si cambió respecto al guardado, actualizamos el CartItem en la DB.
+  if (cart && cart.items.length > 0) {
+    await Promise.all(
+      cart.items.map(async (item) => {
+        const productoActual = await getProductoById(item.product_id)
+        if (!productoActual) return
+
+        const precioGuardado = Number(item.precio_unitario)
+        const precioActual = productoActual.precio
+
+        if (precioActual !== precioGuardado) {
+          await prisma.cartItem.update({
+            where: { id: item.id },
+            data: { precio_unitario: precioActual }
+          })
+          // Actualizar también en memoria para que CartDetails reciba el precio correcto
+          item.precio_unitario = precioActual as any
+        }
+      })
+    )
+  }
+
   const cartData = cart
     ? {
         ...cart,
@@ -53,7 +78,7 @@ export default async function CarritoPage() {
             <ShoppingCart size={32} /> Mi carrito
           </h1>
           <div className="inline-flex items-center rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
-            <Truck size={16} className="mr-2" /> Retiro en el local del vendedor
+            <Store size={16} className="mr-2" /> Retiro en el local del vendedor
           </div>
         </div>
 
