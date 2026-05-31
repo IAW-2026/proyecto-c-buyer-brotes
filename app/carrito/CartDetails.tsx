@@ -167,15 +167,11 @@ export default function CartDetails({ initialCart, buyerId, tieneDireccion, sell
             <span className="text-sm" style={{ color: '#243B27' }}>Subtotal</span>
             <span className="font-semibold" style={{ color: '#243B27' }}>{formatPrice(total)}</span>
           </div>
-          <div className="flex items-center justify-between py-4">
-            <span className="text-sm" style={{ color: '#243B27' }}>Envío</span>
-            <span className="text-sm text-[#7BA05D]">Gratis</span>
-          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm" style={{ color: '#243B27' }}>Total estimado</span>
             <span className="text-lg font-bold" style={{ color: '#4C6B3D' }}>{formatPrice(total)}</span>
           </div>
-          <p className="mt-4 text-xs text-[#4C6B3D]">*Los precios son estimados y pueden variar al momento del checkout.</p>
+          <p className="mt-4 text-xs text-[#4C6B3D]">* Una vez confirmada tu compra, te avisamos cuando el pedido esté listo para retirar.</p>
         </div>
 
         <div className="rounded-3xl bg-[#EAF3E6] p-6 shadow-sm flex flex-col gap-3">

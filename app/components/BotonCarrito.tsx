@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import ModalDireccion from './ModalDireccion'
 import ModalLogin from './ModalLogin'
 
@@ -20,6 +21,7 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
   const [mensaje, setMensaje] = useState('')
   const [mostrarModalDireccion, setMostrarModalDireccion] = useState(false)
   const [mostrarModalLogin, setMostrarModalLogin] = useState(false)
+  const router = useRouter()
 
   // Usuario no logueado
   if (buyerId === 0) {
@@ -103,6 +105,7 @@ export default function BotonCarrito({ productoId, productNombre, precio, seller
       }
 
       setMensaje('✅ Agregado al carrito')
+      router.refresh()
 
     } catch (error) {
       setMensaje('❌ Error de conexión')

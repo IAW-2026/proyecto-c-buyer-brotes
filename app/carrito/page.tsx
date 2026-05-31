@@ -53,7 +53,7 @@ export default async function CarritoPage() {
             <ShoppingCart size={32} /> Mi carrito
           </h1>
           <div className="inline-flex items-center rounded-full bg-[#EAF3E6] px-4 py-2 text-sm font-semibold text-[#4C6B3D]">
-            <Truck size={16} className="mr-2" /> Envío estimado disponible
+            <Truck size={16} className="mr-2" /> Retiro en el local del vendedor
           </div>
         </div>
 
