@@ -47,7 +47,6 @@ export default async function AdminPage({ searchParams }: Props) {
 
       prisma.order.findMany({
         orderBy: { created_at: 'desc' },
-        take: 20,
         include: {
           buyer: { select: { nombre: true, email: true } },
           items: { select: { id: true } }

@@ -28,7 +28,6 @@ export async function GET() {
 
     prisma.order.findMany({
       orderBy: { created_at: 'desc' },
-      take: 20,
       include: {
         buyer: { select: { nombre: true, email: true } },
         items: true
