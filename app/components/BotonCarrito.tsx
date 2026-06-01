@@ -143,7 +143,7 @@ export default function BotonCarrito({
             router.refresh()
             router.push('/carrito')
           }}
-          className="text-xs underline"
+          className="text-xs underline cursor-pointer"
           style={{ color: '#7BA05D' }}
         >
           Ver carrito
