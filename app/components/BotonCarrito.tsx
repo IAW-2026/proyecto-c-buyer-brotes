@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import ModalDireccion from './ModalDireccion'
 import ModalLogin from './ModalLogin'
 import ModalPerfilIncompleto from './ModalPerfilIncompleto'
@@ -26,6 +26,7 @@ export default function BotonCarrito({
   const [mostrarModalDireccion, setMostrarModalDireccion] = useState(false)
   const [mostrarModalLogin, setMostrarModalLogin] = useState(false)
   const [mostrarModalPerfil, setMostrarModalPerfil] = useState(false)
+  const router = useRouter()
 
   // Usuario no logueado
   if (buyerId === 0) {
@@ -72,7 +73,6 @@ export default function BotonCarrito({
   }
 
   const agregarAlCarrito = async () => {
-    // Falta nombre o dirección → modal de perfil incompleto
     if (!tieneNombre || !tieneDireccion) {
       setMostrarModalPerfil(true)
       return
@@ -101,6 +101,7 @@ export default function BotonCarrito({
         return
       }
 
+      router.refresh()
       setMensaje('✅ Agregado al carrito')
 
     } catch {
@@ -137,9 +138,16 @@ export default function BotonCarrito({
       )}
 
       <div className="text-center mt-2">
-        <Link href="/carrito" className="text-xs underline" style={{ color: '#7BA05D' }}>
+        <button
+          onClick={() => {
+            router.refresh()
+            router.push('/carrito')
+          }}
+          className="text-xs underline"
+          style={{ color: '#7BA05D' }}
+        >
           Ver carrito
-        </Link>
+        </button>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Leaf, Minus, Plus, Store } from 'lucide-react'
 import Link from 'next/link'
 import BotonVaciarCarrito from '../components/BotonVaciarCarrito'
@@ -35,6 +36,7 @@ export default function CartDetails({ initialCart, buyerId, tieneNombre, tieneDi
   const [cart, setCart] = useState<Cart | null>(initialCart)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
   const [mensaje, setMensaje] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
     setCart(initialCart)
@@ -64,6 +66,12 @@ export default function CartDetails({ initialCart, buyerId, tieneNombre, tieneDi
           .filter(item => item.cantidad > 0)
         return { ...prev, items: updatedItems }
       })
+
+      clearTimeout((window as any).__cartRefreshTimeout)
+      ;(window as any).__cartRefreshTimeout = setTimeout(() => {
+        router.refresh()
+      }, 800)
+
     } catch {
       setMensaje('Error de conexión')
     } finally {
