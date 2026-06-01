@@ -15,7 +15,7 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   const { id } = await params
   const body = await request.json()
-  const { status } = body
+  const { status, payment_id, updated_at } = body
 
   if (!estadosValidos.includes(status)) {
     return NextResponse.json(

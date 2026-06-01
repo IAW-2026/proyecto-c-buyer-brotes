@@ -1,14 +1,19 @@
-import { prisma } from '../../lib/prisma'
+import { prisma } from '../../../lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest) {
+type Props = {
+  params: Promise<{ id: string }>
+}
+
+export async function POST(request: NextRequest, { params }: Props) {
   const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
   if (apiKey !== process.env.BUYER_SERVICE_API_KEY) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
+  const { id: payment_id } = await params
   const body = await request.json()
-  const { payment_id, buyer_id } = body
+  const { buyer_id } = body
 
   const order = await prisma.order.findFirst({
     where: {

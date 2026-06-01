@@ -3,6 +3,7 @@ import { vendedores } from '../../lib/mock-data'
 import { NextRequest, NextResponse } from 'next/server'
 
 const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
+const SELLER_APP_URL = process.env.SELLER_APP_URL
 const SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -13,44 +14,18 @@ function getProductName(product_id: number): string | null {
     .find(p => p.id === product_id)?.nombre ?? null
 }
 
-// ── GET /api/orders?buyer_id=X&order_id=Y ─────────────────────────────────────
-// Usado por Payments App para consultar una orden
+// ── GET /api/orders?buyer_id=X ────────────────────────────────────────────────
+// Usado por Payments App para consultar órdenes de un buyer
 
 export async function GET(request: NextRequest) {
   const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
-  const buyer_id = request.nextUrl.searchParams.get('buyer_id')
-  const order_id = request.nextUrl.searchParams.get('order_id')
-
-  const isServiceCall = apiKey === SERVICE_API_KEY
-
-  if (!isServiceCall && !buyer_id) {
-    return NextResponse.json({ error: 'buyer_id es requerido' }, { status: 400 })
+  if (apiKey !== SERVICE_API_KEY) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  if (order_id) {
-    const order = await prisma.order.findUnique({
-      where: { id: Number(order_id) },
-      include: { items: true }
-    })
-    if (!order) {
-      return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
-    }
-    return NextResponse.json({
-      id: order.id,
-      buyer_id: order.buyer_id,
-      seller_id: order.seller_id,
-      status: order.estado,
-      total: { amount: Number(order.total), currency: 'ARS' },
-      payment_id: order.payment_id,
-      items: order.items.map(i => ({
-        product_id: i.product_id,
-        product_name: i.product_name_snapshot,
-        unit_price: Number(i.unit_price_snapshot),
-        quantity: i.cantidad,
-        subtotal: Number(i.unit_price_snapshot) * i.cantidad
-      })),
-      created_at: order.created_at.toISOString()
-    })
+  const buyer_id = request.nextUrl.searchParams.get('buyer_id')
+  if (!buyer_id || isNaN(Number(buyer_id))) {
+    return NextResponse.json({ error: 'buyer_id es requerido y debe ser un número' }, { status: 400 })
   }
 
   const orders = await prisma.order.findMany({
@@ -58,6 +33,7 @@ export async function GET(request: NextRequest) {
     include: { items: true },
     orderBy: { created_at: 'desc' }
   })
+
   return NextResponse.json(orders)
 }
 
@@ -110,7 +86,7 @@ export async function POST(request: NextRequest) {
     where: {
       id: Number(cart_id),
       buyer_id: Number(buyer_id),
-      estado: 'active'          // solo carritos activos, nunca checked_out
+      estado: 'active'
     },
     include: { items: true }
   })
@@ -129,6 +105,39 @@ export async function POST(request: NextRequest) {
       { error: 'El carrito no tiene un vendedor asociado' },
       { status: 400 }
     )
+  }
+
+  // ── Reservar stock en Seller App ──────────────────────────────────────────
+  if (SELLER_APP_URL) {
+    try {
+      const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SERVICE_API_KEY}`
+        },
+        body: JSON.stringify({
+          buyer_id: Number(buyer_id),
+          buyer_order_id: null,
+          items: cart.items.map(item => ({
+            product_id: item.product_id,
+            quantity: item.cantidad
+          }))
+        })
+      })
+
+      if (!stockRes.ok) {
+        const errData = await stockRes.json().catch(() => ({}))
+        console.error('[orders] Stock reservation failed:', stockRes.status, errData)
+        return NextResponse.json(
+          { error: errData.error ?? 'No hay stock disponible para uno o más productos' },
+          { status: 409 }
+        )
+      }
+    } catch (err) {
+      // Seller App no disponible — modo desarrollo, continuamos sin reserva
+      console.warn('[orders] Seller App no disponible para stock-reservations, continuando sin reserva')
+    }
   }
 
   // ── Calcular total y preparar items con snapshot ──────────────────────────
@@ -157,14 +166,12 @@ export async function POST(request: NextRequest) {
   })
 
   // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
-  // Borramos los items ANTES de cambiar el estado para que si el buyer
-  // vuelve al carrito no vea los productos de la compra anterior.
   await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
   await prisma.cart.update({
     where: { id: cart.id },
     data: {
       estado: 'checked_out',
-      seller_id: null           // liberar el seller para la próxima compra
+      seller_id: null
     }
   })
 
@@ -204,7 +211,6 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Pago asincrónico — Payments App resolverá via webhook
         return NextResponse.json({ pending: true, order_id: order.id }, { status: 201 })
       }
 

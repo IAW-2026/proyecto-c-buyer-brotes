@@ -5,16 +5,16 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/explorar(.*)',
   '/vendedores(.*)',
-  '/foro(.*)',                        // ← NUEVO: el foro es público (lectura sin login)
-  '/sign-in(.*)',
+  '/foro(.*)',
+  '/sign-in(.*)',        
   '/sign-up(.*)',
   '/api/weather',
   '/api/plantas/consejos',
-  '/api/forum/threads',               // ← NUEVO: GET de hilos sin login
-  '/api/forum/threads/(.*)',          // ← NUEVO: GET de hilo individual sin login
-  '/api/approved-payment',
-  '/api/rejected-payment',
-  '/api/orders/:id/status-update',
+  '/api/forum/threads',
+  '/api/forum/threads/(.*)',
+  '/api/approved-payment/(.*)',
+  '/api/rejected-payment/(.*)',
+  '/api/orders/(.*)/status-update',  
 ])
 
 export default clerkMiddleware(async (auth, request) => {
