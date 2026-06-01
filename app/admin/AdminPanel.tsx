@@ -271,7 +271,7 @@ function ReporteVentas({ reporte }: { reporte: Reporte }) {
       <div className="rounded-3xl border border-[#EAF3E6] bg-white shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-[#EAF3E6] flex items-center justify-between">
           <div>
-            <h2 className="font-bold" style={{ color: '#243B27' }}>Órdenes recientes</h2>
+            <h2 className="font-bold" style={{ color: '#243B27' }}>Compras recientes</h2>
             <p className="text-sm" style={{ color: '#7BA05D' }}>
               {ordenesFiltradas.length} orden{ordenesFiltradas.length !== 1 ? 'es' : ''}
               {filtroEstado !== 'todos' && ` con estado "${filtroEstado}"`}
@@ -464,7 +464,7 @@ export default function AdminPanel({ buyersIniciales, reporte, initialQuery, ini
               color: tab === 'reporte' ? 'white' : '#4C6B3D'
             }}
           >
-            <BarChart2 size={16} /> Reporte de ventas
+            <BarChart2 size={16} /> Reporte de compras
           </button>
         </div>
 
