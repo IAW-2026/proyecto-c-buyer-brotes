@@ -22,7 +22,8 @@ export default async function PedidosPage() {
     include: { items: true },
     orderBy: { created_at: 'desc' },
   })
-
+/*La serialización convierte los Decimal de Prisma a Number y los Date a strings ISO,
+  porque los server components no pueden pasar tipos complejos directamente a client components.*/
   const ordersSerializadas = orders.map(order => {
     const seller = vendedores.find(v => v.id === order.seller_id)
     return {
