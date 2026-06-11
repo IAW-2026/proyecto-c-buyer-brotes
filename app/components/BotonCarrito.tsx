@@ -101,7 +101,8 @@ export default function BotonCarrito({
         return
       }
 
-      router.refresh()
+      // Notificar al CarritoFlotante para que refresque su contador
+      window.dispatchEvent(new Event('cartUpdated'))
       setMensaje('✅ Agregado al carrito')
 
     } catch {
@@ -139,10 +140,7 @@ export default function BotonCarrito({
 
       <div className="text-center mt-2">
         <button
-          onClick={() => {
-            router.refresh()
-            router.push('/carrito')
-          }}
+          onClick={() => router.push('/carrito')}
           className="text-xs underline cursor-pointer"
           style={{ color: '#7BA05D' }}
         >

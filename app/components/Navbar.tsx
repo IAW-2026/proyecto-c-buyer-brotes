@@ -1,6 +1,4 @@
 import Link from 'next/link'
-import { ShoppingCart } from 'lucide-react'
-import { prisma } from '../lib/prisma'
 import { getBuyerFromClerk } from '../lib/auth'
 import { cancelarOrdenesCaducadas } from '../lib/cancelarOrdenesCaducadas'
 import { auth } from '@clerk/nextjs/server'
@@ -15,13 +13,6 @@ export default async function Navbar() {
   if (buyer) {
     await cancelarOrdenesCaducadas(buyer.id)
   }
-
-  const cart = buyer ? await prisma.cart.findFirst({
-    where: { buyer_id: buyer.id, estado: 'active' },
-    include: { items: true }
-  }) : null
-
-  const cantidadItems = cart?.items.reduce((acc, item) => acc + item.cantidad, 0) ?? 0
 
   return (
     <nav className="flex items-center justify-between px-8 py-4" style={{ backgroundColor: '#4a6535' }}>
@@ -43,18 +34,6 @@ export default async function Navbar() {
             Panel de administración
           </Link>
         )}
-
-        <Link href="/carrito" className="relative">
-          <ShoppingCart size={24} color="#F5F2EA" />
-          {cantidadItems > 0 && (
-            <span
-              className="absolute -top-2 -right-2 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center text-white"
-              style={{ backgroundColor: '#E07A5F' }}
-            >
-              {cantidadItems}
-            </span>
-          )}
-        </Link>
 
         {buyer ? (
           <UserMenu nombre={buyer.nombre ?? 'Mi perfil'} />
