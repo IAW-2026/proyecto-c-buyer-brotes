@@ -18,6 +18,10 @@ export default function BotonVaciarCarrito({ cartId }: Props) {
     setCargando(true)
     try {
       await fetch(`/api/cart?cart_id=${cartId}`, { method: 'DELETE' })
+
+      // Notificar al CarritoFlotante
+      window.dispatchEvent(new Event('cartUpdated'))
+
       router.refresh()
     } catch (error) {
       alert('Error al vaciar el carrito')

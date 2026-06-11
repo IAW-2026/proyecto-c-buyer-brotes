@@ -59,6 +59,7 @@ export default function CartDetails({ initialCart, buyerId, tieneNombre, tieneDi
         return
       }
 
+      // Actualizar estado local
       setCart(prev => {
         if (!prev) return prev
         const updatedItems = prev.items
@@ -67,10 +68,8 @@ export default function CartDetails({ initialCart, buyerId, tieneNombre, tieneDi
         return { ...prev, items: updatedItems }
       })
 
-      clearTimeout((window as any).__cartRefreshTimeout)
-      ;(window as any).__cartRefreshTimeout = setTimeout(() => {
-        router.refresh()
-      }, 800)
+      // Notificar al CarritoFlotante
+      window.dispatchEvent(new Event('cartUpdated'))
 
     } catch {
       setMensaje('Error de conexión')
@@ -111,7 +110,7 @@ export default function CartDetails({ initialCart, buyerId, tieneNombre, tieneDi
         {cart.items.map(item => (
           <div
             key={item.id}
-            className="rounded-3xl border border-[#EAF3E6] bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md"
+            className="rounded-3xl border border-[#EAF3E6] bg-white p-5 shadow-sm"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">

@@ -14,21 +14,28 @@ export default function CarritoFlotante({ buyerId }: Props) {
   const pathname = usePathname()
 
   const fetchCantidad = useCallback(async () => {
-    if (!buyerId) return
+    if (!buyerId) {
+      setCantidad(0)
+      return
+    }
     try {
       const res = await fetch(`/api/cart?buyer_id=${buyerId}`)
-      const data = await res.json()
-      if (!data) {
+      if (!res.ok) {
         setCantidad(0)
         return
       }
-      const total = (data.items ?? []).reduce(
+      const data = await res.json()
+      if (!data || !Array.isArray(data.items)) {
+        setCantidad(0)
+        return
+      }
+      const total = data.items.reduce(
         (acc: number, item: { cantidad: number }) => acc + item.cantidad,
         0
       )
       setCantidad(total)
     } catch {
-      // silencioso
+      setCantidad(0)
     }
   }, [buyerId])
 
