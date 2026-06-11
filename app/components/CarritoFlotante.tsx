@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { ShoppingCart } from 'lucide-react'
 
@@ -13,7 +13,7 @@ export default function CarritoFlotante({ buyerId }: Props) {
   const router = useRouter()
   const pathname = usePathname()
 
-  const fetchCantidad = async () => {
+  const fetchCantidad = useCallback(async () => {
     if (!buyerId) return
     try {
       const res = await fetch(`/api/cart?buyer_id=${buyerId}`)
@@ -30,17 +30,16 @@ export default function CarritoFlotante({ buyerId }: Props) {
     } catch {
       // silencioso
     }
-  }
+  }, [buyerId])
 
   useEffect(() => {
     fetchCantidad()
 
-    const handler = () => fetchCantidad()
-    window.addEventListener('cartUpdated', handler)
-    return () => window.removeEventListener('cartUpdated', handler)
-  }, [buyerId])
+    window.addEventListener('cartUpdated', fetchCantidad)
+    return () => window.removeEventListener('cartUpdated', fetchCantidad)
+  }, [fetchCantidad, pathname])
 
-  if (!buyerId || pathname === '/carrito') return null
+  if (!buyerId) return null
 
   return (
     <button
