@@ -46,6 +46,12 @@ export default function BotonConfirmarCompra({ cartId, buyerId, tieneNombre, tie
         return
       }
 
+      if (data.pending && data.mp_init_point) {
+        // Redirige al usuario al Checkout de Mercado Pago
+        window.location.href = data.mp_init_point
+        return
+      }
+
       if (data.pending && data.order_id) {
         router.push('/pedidos')
         return

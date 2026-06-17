@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
 
       if (paymentRes.ok) {
         const paymentData = await paymentRes.json()
-        console.log('[orders] Payments response:', JSON.stringify(paymentData)) // ← agregado para debug
+        console.log('[orders] Payments response:', JSON.stringify(paymentData))
 
         if (paymentData.status === 'approved' && paymentData.payment_id) {
           await prisma.order.update({
@@ -212,7 +212,16 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        return NextResponse.json({ pending: true, order_id: order.id }, { status: 201 })
+        // Pago pendiente: si Payments App nos manda el init_point de Mercado Pago,
+        // lo reenviamos al frontend para que redirija al usuario al checkout de MP.
+        return NextResponse.json(
+          {
+            pending: true,
+            order_id: order.id,
+            mp_init_point: paymentData.mp_init_point ?? null
+          },
+          { status: 201 }
+        )
       }
 
       console.error('[orders] Payments App error:', paymentRes.status)
