@@ -110,7 +110,22 @@ export async function POST(request: NextRequest) {
   // ── Reservar stock en Seller App ──────────────────────────────────────────
   if (SELLER_APP_URL) {
     try {
-      const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
+      // ── DEBUG: inspeccionar la key y la URL sin exponer el secreto completo ──
+      const stockUrl = `${SELLER_APP_URL}/api/stock-reservations`
+      console.log('[orders][debug] SELLER_APP_URL:', SELLER_APP_URL)
+      console.log('[orders][debug] stock reservation URL completa:', stockUrl)
+      console.log('[orders][debug] BUYER_SERVICE_API_KEY existe?:', !!SERVICE_API_KEY)
+      console.log('[orders][debug] BUYER_SERVICE_API_KEY longitud:', SERVICE_API_KEY?.length ?? 0)
+      console.log(
+        '[orders][debug] BUYER_SERVICE_API_KEY primeros/últimos chars:',
+        SERVICE_API_KEY ? `${SERVICE_API_KEY.slice(0, 4)}...${SERVICE_API_KEY.slice(-4)}` : 'N/A'
+      )
+      console.log(
+        '[orders][debug] Authorization header que se va a enviar (largo):',
+        `Bearer ${SERVICE_API_KEY}`.length
+      )
+
+      const stockRes = await fetch(stockUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +141,19 @@ export async function POST(request: NextRequest) {
         })
       })
 
+      console.log('[orders][debug] stockRes.status:', stockRes.status)
+      console.log('[orders][debug] stockRes.ok:', stockRes.ok)
+      console.log(
+        '[orders][debug] stockRes headers:',
+        JSON.stringify(Object.fromEntries(stockRes.headers.entries()))
+      )
+
       if (!stockRes.ok) {
+        // Clonamos para poder leer el body como texto crudo además del intento de JSON,
+        // por si Seller App devuelve HTML o un body no-JSON en el 401/403.
+        const rawText = await stockRes.clone().text().catch(() => '<no se pudo leer el body>')
+        console.error('[orders][debug] stockRes body crudo:', rawText)
+
         const errData = await stockRes.json().catch(() => ({}))
         console.error('[orders] Stock reservation failed:', stockRes.status, errData)
         return NextResponse.json(
@@ -137,7 +164,10 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       // Seller App no disponible — modo desarrollo, continuamos sin reserva
       console.warn('[orders] Seller App no disponible para stock-reservations, continuando sin reserva')
+      console.error('[orders][debug] Excepción al llamar a Seller App:', err)
     }
+  } else {
+    console.warn('[orders][debug] SELLER_APP_URL no está seteada, se omite la reserva de stock')
   }
 
   // ── Calcular total y preparar items con snapshot ──────────────────────────
