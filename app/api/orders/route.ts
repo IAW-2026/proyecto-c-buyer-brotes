@@ -6,8 +6,8 @@ const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
 const SELLER_APP_URL   = process.env.SELLER_APP_URL
 
 // Cada app tiene su propia API key
-const SELLER_API_KEY   = process.env.SELLER_API_KEY
-const PAYMENTS_API_KEY = process.env.PAYMENTS_API_KEY
+const SELLER_API_KEY   = process.env.SELLER_SERVICE_API_KEY
+const PAYMENTS_API_KEY = process.env.PAYMENTS_SERVICE_API_KEY
 
 // Esta sigue siendo la key que las otras apps usan para llamarnos a nosotros
 const BUYER_SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
