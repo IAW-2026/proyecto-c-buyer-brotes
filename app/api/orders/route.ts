@@ -5,11 +5,10 @@ import { NextRequest, NextResponse } from 'next/server'
 const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
 const SELLER_APP_URL   = process.env.SELLER_APP_URL
 
-// Cada app tiene su propia API key
 const SELLER_API_KEY   = process.env.SELLER_SERVICE_API_KEY
 const PAYMENTS_API_KEY = process.env.PAYMENTS_SERVICE_API_KEY
 
-// Esta sigue siendo la key que las otras apps usan para llamarnos a nosotros
+// Key que las otras apps usan para llamarnos a nosotros
 const BUYER_SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -21,7 +20,6 @@ function getProductName(product_id: number): string | null {
 }
 
 // ── GET /api/orders?buyer_id=X ────────────────────────────────────────────────
-// Usado por Payments App para consultar órdenes de un buyer
 
 export async function GET(request: NextRequest) {
   const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
@@ -44,7 +42,6 @@ export async function GET(request: NextRequest) {
 }
 
 // ── POST /api/orders ──────────────────────────────────────────────────────────
-// Convierte un carrito activo en una orden y dispara el pago
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
@@ -113,38 +110,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Reservar stock en Seller App ──────────────────────────────────────────
-  if (SELLER_APP_URL) {
-    try {
-      const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SELLER_API_KEY}`
-        },
-        body: JSON.stringify({
-          buyer_id: Number(buyer_id),
-          buyer_order_id: null,
-          items: cart.items.map(item => ({
-            product_id: item.product_id,
-            quantity: item.cantidad
-          }))
-        })
-      })
-
-      if (!stockRes.ok) {
-        const errData = await stockRes.json().catch(() => ({}))
-        console.error('[orders] Stock reservation failed:', stockRes.status, errData)
-        return NextResponse.json(
-          { error: errData.error ?? 'No hay stock disponible para uno o más productos' },
-          { status: 409 }
-        )
-      }
-    } catch (err) {
-      console.warn('[orders] Seller App no disponible para stock-reservations, continuando sin reserva')
-    }
-  }
-
   // ── Calcular total y preparar items con snapshot ──────────────────────────
   const total = cart.items.reduce(
     (sum, item) => sum + Number(item.precio_unitario) * item.cantidad,
@@ -158,7 +123,8 @@ export async function POST(request: NextRequest) {
     cantidad: item.cantidad
   }))
 
-  // ── Crear la Order en estado pendiente ────────────────────────────────────
+  // ── Crear la Order en estado pendiente PRIMERO ────────────────────────────
+  // Necesitamos el order.id antes de llamar a Seller App para stock
   const order = await prisma.order.create({
     data: {
       buyer_id: Number(buyer_id),
@@ -176,6 +142,37 @@ export async function POST(request: NextRequest) {
     where: { id: cart.id },
     data: { estado: 'checked_out', seller_id: null }
   })
+
+  // ── Reservar stock en Seller App ──────────────────────────────────────────
+  // Ahora sí podemos pasar el buyer_order_id real
+  if (SELLER_APP_URL) {
+    try {
+      const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SELLER_API_KEY}`
+        },
+        body: JSON.stringify({
+          buyer_id: Number(buyer_id),
+          buyer_order_id: order.id,
+          items: cart.items.map(item => ({
+            product_id: item.product_id,
+            quantity: item.cantidad
+          }))
+        })
+      })
+
+      if (!stockRes.ok) {
+        const errData = await stockRes.json().catch(() => ({}))
+        console.error('[orders] Stock reservation failed:', stockRes.status, errData)
+        // No bloqueamos la compra si falla la reserva de stock,
+        // la orden ya fue creada — seguimos al pago
+      }
+    } catch (err) {
+      console.warn('[orders] Seller App no disponible para stock-reservations, continuando')
+    }
+  }
 
   // ── Intentar llamar a Payments App ────────────────────────────────────────
   if (PAYMENTS_APP_URL) {

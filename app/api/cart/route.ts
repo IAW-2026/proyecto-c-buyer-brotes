@@ -1,15 +1,7 @@
 import { prisma } from '../../lib/prisma'
-import { vendedores } from '../../lib/mock-data'
 import { NextRequest, NextResponse } from 'next/server'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getSellerIdFromProduct(product_id: number): number | null {
-  const seller = vendedores.find(v =>
-    v.productos.some(p => p.id === product_id)
-  )
-  return seller?.id ?? null
-}
 
 async function getOrCreateBuyer(buyer_id: number) {
   const existing = await prisma.buyer.findUnique({ where: { id: buyer_id } })
@@ -66,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   const { buyer_id, product_id, precio_unitario, cantidad, seller_id } = body
 
-  // ── Validaciones ──────────────────────────────────────────────────────────
+  // ── Validaciones básicas ──────────────────────────────────────────────────
   if (!buyer_id || isNaN(Number(buyer_id))) {
     return NextResponse.json(
       { error: 'buyer_id es requerido y debe ser un número' },
@@ -98,24 +90,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Validar que el producto existe ────────────────────────────────────────
-  const productoExiste = vendedores
-    .flatMap(v => v.productos)
-    .some(p => p.id === Number(product_id))
-
-  if (!productoExiste) {
-    return NextResponse.json({ error: 'El producto no existe' }, { status: 404 })
-  }
-
-  // ── Validar que el seller_id corresponde al producto ─────────────────────
-  const sellerRealId = getSellerIdFromProduct(Number(product_id))
-  if (sellerRealId !== Number(seller_id)) {
-    return NextResponse.json(
-      { error: 'El seller_id no corresponde al producto indicado' },
-      { status: 409 }
-    )
-  }
-
   // ── Validar estado del buyer ──────────────────────────────────────────────
   try {
     await getOrCreateBuyer(Number(buyer_id))
@@ -138,9 +112,6 @@ export async function POST(request: NextRequest) {
   const sellerIdNumber = Number(seller_id)
 
   // ── Obtener o crear el carrito del buyer ──────────────────────────────────
-  // El schema tiene @@unique en buyer_id: hay exactamente 1 carrito por buyer.
-  // Si existe (en cualquier estado), lo reactivamos y limpiamos si hace falta.
-  // Si no existe, lo creamos.
   let cart = await prisma.cart.findUnique({
     where: { buyer_id: Number(buyer_id) },
     include: { items: true }
@@ -148,16 +119,12 @@ export async function POST(request: NextRequest) {
 
   if (cart) {
     if (cart.estado === 'active') {
-      // ── Carrito activo: validar que el seller coincide ──────────────────
-      if (cart.items.length > 0) {
-        const currentSellerId = cart.seller_id ?? getSellerIdFromProduct(cart.items[0].product_id)
-
-        if (currentSellerId !== null && currentSellerId !== sellerIdNumber) {
-          return NextResponse.json(
-            { error: 'Ya tenés productos de otro vendedor en el carrito' },
-            { status: 409 }
-          )
-        }
+      // Carrito activo: validar que el seller coincide
+      if (cart.items.length > 0 && cart.seller_id !== null && cart.seller_id !== sellerIdNumber) {
+        return NextResponse.json(
+          { error: 'Ya tenés productos de otro vendedor en el carrito' },
+          { status: 409 }
+        )
       }
 
       // Actualizar seller_id si estaba vacío
@@ -169,22 +136,17 @@ export async function POST(request: NextRequest) {
         })
       }
     } else {
-      // ── Carrito checked_out o abandoned: reactivar limpio ───────────────
-      // Los items ya fueron eliminados por /api/orders al confirmar la compra,
-      // pero por seguridad hacemos deleteMany antes de reactivar.
+      // Carrito checked_out o abandoned: reactivar limpio
       await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
 
       cart = await prisma.cart.update({
         where: { id: cart.id },
-        data: {
-          estado: 'active',
-          seller_id: sellerIdNumber
-        },
+        data: { estado: 'active', seller_id: sellerIdNumber },
         include: { items: true }
       })
     }
   } else {
-    // ── No existe carrito: crear uno nuevo ─────────────────────────────────
+    // No existe carrito: crear uno nuevo
     cart = await prisma.cart.create({
       data: {
         buyer_id: Number(buyer_id),
