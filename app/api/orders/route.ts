@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           buyer_id: Number(buyer_id),
-          buyer_order_id: order.id,
+          buyer_order_id: String(order.id),
           items: cart.items.map(item => ({
             product_id: item.product_id,
             quantity: item.cantidad
