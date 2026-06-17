@@ -3,13 +3,8 @@ import { vendedores } from '../../lib/mock-data'
 import { NextRequest, NextResponse } from 'next/server'
 
 const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
-const SELLER_APP_URL   = process.env.SELLER_APP_URL
-
-const SELLER_API_KEY   = process.env.SELLER_SERVICE_API_KEY
-const PAYMENTS_API_KEY = process.env.PAYMENTS_SERVICE_API_KEY
-
-// Key que las otras apps usan para llamarnos a nosotros
-const BUYER_SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
+const SELLER_APP_URL = process.env.SELLER_APP_URL
+const SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -20,10 +15,11 @@ function getProductName(product_id: number): string | null {
 }
 
 // ── GET /api/orders?buyer_id=X ────────────────────────────────────────────────
+// Usado por Payments App para consultar órdenes de un buyer
 
 export async function GET(request: NextRequest) {
   const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (apiKey !== BUYER_SERVICE_API_KEY) {
+  if (apiKey !== SERVICE_API_KEY) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
@@ -42,6 +38,7 @@ export async function GET(request: NextRequest) {
 }
 
 // ── POST /api/orders ──────────────────────────────────────────────────────────
+// Convierte un carrito activo en una orden y dispara el pago
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
@@ -110,6 +107,39 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // ── Reservar stock en Seller App ──────────────────────────────────────────
+  if (SELLER_APP_URL) {
+    try {
+      const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SERVICE_API_KEY}`
+        },
+        body: JSON.stringify({
+          buyer_id: Number(buyer_id),
+          buyer_order_id: null,
+          items: cart.items.map(item => ({
+            product_id: item.product_id,
+            quantity: item.cantidad
+          }))
+        })
+      })
+
+      if (!stockRes.ok) {
+        const errData = await stockRes.json().catch(() => ({}))
+        console.error('[orders] Stock reservation failed:', stockRes.status, errData)
+        return NextResponse.json(
+          { error: errData.error ?? 'No hay stock disponible para uno o más productos' },
+          { status: 409 }
+        )
+      }
+    } catch (err) {
+      // Seller App no disponible — modo desarrollo, continuamos sin reserva
+      console.warn('[orders] Seller App no disponible para stock-reservations, continuando sin reserva')
+    }
+  }
+
   // ── Calcular total y preparar items con snapshot ──────────────────────────
   const total = cart.items.reduce(
     (sum, item) => sum + Number(item.precio_unitario) * item.cantidad,
@@ -123,8 +153,7 @@ export async function POST(request: NextRequest) {
     cantidad: item.cantidad
   }))
 
-  // ── Crear la Order en estado pendiente PRIMERO ────────────────────────────
-  // Necesitamos el order.id antes de llamar a Seller App para stock
+  // ── Crear la Order en estado pendiente ────────────────────────────────────
   const order = await prisma.order.create({
     data: {
       buyer_id: Number(buyer_id),
@@ -136,43 +165,15 @@ export async function POST(request: NextRequest) {
     include: { items: true }
   })
 
-  // ── Limpiar el carrito ────────────────────────────────────────────────────
+  // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
   await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
   await prisma.cart.update({
     where: { id: cart.id },
-    data: { estado: 'checked_out', seller_id: null }
-  })
-
-  // ── Reservar stock en Seller App ──────────────────────────────────────────
-  // Ahora sí podemos pasar el buyer_order_id real
-  if (SELLER_APP_URL) {
-    try {
-      const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SELLER_API_KEY}`
-        },
-        body: JSON.stringify({
-          buyer_id: Number(buyer_id),
-          buyer_order_id: String(order.id),
-          items: cart.items.map(item => ({
-            product_id: item.product_id,
-            quantity: item.cantidad
-          }))
-        })
-      })
-
-      if (!stockRes.ok) {
-        const errData = await stockRes.json().catch(() => ({}))
-        console.error('[orders] Stock reservation failed:', stockRes.status, errData)
-        // No bloqueamos la compra si falla la reserva de stock,
-        // la orden ya fue creada — seguimos al pago
-      }
-    } catch (err) {
-      console.warn('[orders] Seller App no disponible para stock-reservations, continuando')
+    data: {
+      estado: 'checked_out',
+      seller_id: null
     }
-  }
+  })
 
   // ── Intentar llamar a Payments App ────────────────────────────────────────
   if (PAYMENTS_APP_URL) {
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${PAYMENTS_API_KEY}`
+          'Authorization': `Bearer ${SERVICE_API_KEY}`
         },
         body: JSON.stringify({
           order_id: order.id,
@@ -189,13 +190,13 @@ export async function POST(request: NextRequest) {
           seller_id: cart.seller_id,
           amount: total,
           currency: 'ARS',
-          buyer_email: buyer.email,
-          payment_method: 'card'
+          buyer_email: buyer.email
         })
       })
 
       if (paymentRes.ok) {
         const paymentData = await paymentRes.json()
+        console.log('[orders] Payments response:', JSON.stringify(paymentData)) // ← agregado para debug
 
         if (paymentData.status === 'approved' && paymentData.payment_id) {
           await prisma.order.update({
@@ -223,7 +224,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Sin Payments App configurada: mock de pago aprobado (dev/testing) ─────
+  // ── Sin Payments App: mock de pago aprobado (dev/testing) ─────────────────
   await prisma.order.update({
     where: { id: order.id },
     data: {
