@@ -3,8 +3,14 @@ import { vendedores } from '../../lib/mock-data'
 import { NextRequest, NextResponse } from 'next/server'
 
 const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
-const SELLER_APP_URL = process.env.SELLER_APP_URL
-const SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
+const SELLER_APP_URL   = process.env.SELLER_APP_URL
+
+// Cada app tiene su propia API key
+const SELLER_API_KEY   = process.env.SELLER_API_KEY
+const PAYMENTS_API_KEY = process.env.PAYMENTS_API_KEY
+
+// Esta sigue siendo la key que las otras apps usan para llamarnos a nosotros
+const BUYER_SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -19,7 +25,7 @@ function getProductName(product_id: number): string | null {
 
 export async function GET(request: NextRequest) {
   const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (apiKey !== SERVICE_API_KEY) {
+  if (apiKey !== BUYER_SERVICE_API_KEY) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
@@ -114,7 +120,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SERVICE_API_KEY}`
+          'Authorization': `Bearer ${SELLER_API_KEY}`
         },
         body: JSON.stringify({
           buyer_id: Number(buyer_id),
@@ -135,7 +141,6 @@ export async function POST(request: NextRequest) {
         )
       }
     } catch (err) {
-      // Seller App no disponible — modo desarrollo, continuamos sin reserva
       console.warn('[orders] Seller App no disponible para stock-reservations, continuando sin reserva')
     }
   }
@@ -165,14 +170,11 @@ export async function POST(request: NextRequest) {
     include: { items: true }
   })
 
-  // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
+  // ── Limpiar el carrito ────────────────────────────────────────────────────
   await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
   await prisma.cart.update({
     where: { id: cart.id },
-    data: {
-      estado: 'checked_out',
-      seller_id: null
-    }
+    data: { estado: 'checked_out', seller_id: null }
   })
 
   // ── Intentar llamar a Payments App ────────────────────────────────────────
@@ -182,7 +184,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SERVICE_API_KEY}`
+          'Authorization': `Bearer ${PAYMENTS_API_KEY}`
         },
         body: JSON.stringify({
           order_id: order.id,
@@ -190,7 +192,8 @@ export async function POST(request: NextRequest) {
           seller_id: cart.seller_id,
           amount: total,
           currency: 'ARS',
-          buyer_email: buyer.email
+          buyer_email: buyer.email,
+          payment_method: 'card'
         })
       })
 
@@ -223,7 +226,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Sin Payments App: mock de pago aprobado (dev/testing) ─────────────────
+  // ── Sin Payments App configurada: mock de pago aprobado (dev/testing) ─────
   await prisma.order.update({
     where: { id: order.id },
     data: {

@@ -4,30 +4,34 @@ import { vendedores as mockVendedores, Vendedor, Producto } from './mock-data'
 // SELLER APP — endpoints consumidos
 //
 // GET /api/sellers              → todos los vendedores
-// GET /api/sellers/:id          → detalle de un vendedor (nuevo — agregar a doc)
+// GET /api/sellers/:id          → detalle de un vendedor
 // GET /api/products             → todos los productos (con ?seller_id= para filtrar)
-// GET /api/products/:id         → detalle de un producto (nuevo — agregar a doc)
+// GET /api/products/:id         → detalle de un producto
 //
 // PAYMENTS APP — endpoints consumidos
 // POST /api/payments            → procesar pago
 // GET  /api/payments/:id        → estado del pago
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const SELLER_APP_URL = process.env.SELLER_APP_URL
+const SELLER_APP_URL   = process.env.SELLER_APP_URL
 const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
-const SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
+
+// Cada app tiene su propia API key
+const SELLER_API_KEY   = process.env.SELLER_API_KEY
+const PAYMENTS_API_KEY = process.env.PAYMENTS_API_KEY
 
 const sellerHeaders = {
   'Content-Type': 'application/json',
-  'Authorization': `Bearer ${SERVICE_API_KEY}`
+  'Authorization': `Bearer ${SELLER_API_KEY}`
+}
+
+const paymentsHeaders = {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${PAYMENTS_API_KEY}`
 }
 
 // ── Helpers de mapeo ──────────────────────────────────────────────────────────
- 
-/**
- * Convierte la respuesta de Seller App al tipo Producto interno.
- * Ajustar los campos según la respuesta real de la Seller App al integrar.
- */
+
 function mapProducto(p: any): Producto {
   return {
     id: p.id,
@@ -39,10 +43,6 @@ function mapProducto(p: any): Producto {
   }
 }
 
-/**
- * Convierte la respuesta de Seller App al tipo Vendedor interno.
- * Ajustar los campos según la respuesta real de la Seller App al integrar.
- */
 function mapVendedor(s: any, productos: Producto[]): Vendedor {
   return {
     id: s.id,
@@ -78,7 +78,6 @@ export async function getVendedores(): Promise<Vendedor[]> {
     const data = await res.json()
     const sellers: any[] = data.sellers ?? data
 
-    // Para cada seller obtenemos sus productos
     const vendedores = await Promise.all(
       sellers.map(async (seller) => {
         const productos = await getProductosPorVendedor(seller.id)
@@ -126,10 +125,6 @@ export async function getVendedorById(id: number): Promise<Vendedor | undefined>
   }
 }
 
-/**
- * Obtiene todos los productos de un vendedor específico.
- * Usado internamente por getVendedores() y getVendedorById().
- */
 async function getProductosPorVendedor(sellerId: number): Promise<Producto[]> {
   if (!SELLER_APP_URL) {
     return mockVendedores.find(v => v.id === sellerId)?.productos ?? []
@@ -194,10 +189,7 @@ export async function getEstadoPago(pagoId: number) {
 
   try {
     const res = await fetch(`${PAYMENTS_APP_URL}/api/payments/${pagoId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SERVICE_API_KEY}`
-      }
+      headers: paymentsHeaders
     })
 
     if (!res.ok) {
