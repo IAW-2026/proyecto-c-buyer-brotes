@@ -108,70 +108,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Reservar stock en Seller App ──────────────────────────────────────────
-  if (SELLER_APP_URL) {
-    try {
-      // ── DEBUG: inspeccionar la key y la URL sin exponer el secreto completo ──
-      const stockUrl = `${SELLER_APP_URL}/api/stock-reservations`
-      console.log('[orders][debug] SELLER_APP_URL:', SELLER_APP_URL)
-      console.log('[orders][debug] stock reservation URL completa:', stockUrl)
-      console.log('[orders][debug] BUYER_SERVICE_API_KEY existe?:', !!SERVICE_API_KEY)
-      console.log('[orders][debug] BUYER_SERVICE_API_KEY longitud:', SERVICE_API_KEY?.length ?? 0)
-      console.log(
-        '[orders][debug] BUYER_SERVICE_API_KEY primeros/últimos chars:',
-        SERVICE_API_KEY ? `${SERVICE_API_KEY.slice(0, 4)}...${SERVICE_API_KEY.slice(-4)}` : 'N/A'
-      )
-      console.log(
-        '[orders][debug] Authorization header que se va a enviar (largo):',
-        `Bearer ${SERVICE_API_KEY}`.length
-      )
-
-      const stockRes = await fetch(stockUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SELLER_SERVICE_KEY}`
-        },
-        body: JSON.stringify({
-          buyer_id: Number(buyer_id),
-          buyer_order_id: null,
-          items: cart.items.map(item => ({
-            product_id: item.product_id,
-            quantity: item.cantidad
-          }))
-        })
-      })
-
-      console.log('[orders][debug] stockRes.status:', stockRes.status)
-      console.log('[orders][debug] stockRes.ok:', stockRes.ok)
-      console.log(
-        '[orders][debug] stockRes headers:',
-        JSON.stringify(Object.fromEntries(stockRes.headers.entries()))
-      )
-
-      if (!stockRes.ok) {
-        // Clonamos para poder leer el body como texto crudo además del intento de JSON,
-        // por si Seller App devuelve HTML o un body no-JSON en el 401/403.
-        const rawText = await stockRes.clone().text().catch(() => '<no se pudo leer el body>')
-        console.error('[orders][debug] stockRes body crudo:', rawText)
-
-        const errData = await stockRes.json().catch(() => ({}))
-        console.error('[orders] Stock reservation failed:', stockRes.status, errData)
-        return NextResponse.json(
-          { error: errData.error ?? 'No hay stock disponible para uno o más productos' },
-          { status: 409 }
-        )
-      }
-    } catch (err) {
-      // Seller App no disponible — modo desarrollo, continuamos sin reserva
-      console.warn('[orders] Seller App no disponible para stock-reservations, continuando sin reserva')
-      console.error('[orders][debug] Excepción al llamar a Seller App:', err)
-    }
-  } else {
-    console.warn('[orders][debug] SELLER_APP_URL no está seteada, se omite la reserva de stock')
-  }
-
-  // ── Calcular total y preparar items con snapshot ──────────────────────────
+    // ── Calcular total y preparar items con snapshot ──────────────────────────
   const total = cart.items.reduce(
     (sum, item) => sum + Number(item.precio_unitario) * item.cantidad,
     0
@@ -196,38 +133,69 @@ export async function POST(request: NextRequest) {
     include: { items: true }
   })
 
-  // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
-  await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
-  await prisma.cart.update({
-    where: { id: cart.id },
-    data: {
-      estado: 'checked_out',
-      seller_id: null
-    }
-  })
-
-  // ── Intentar llamar a Payments App ────────────────────────────────────────
-  if (PAYMENTS_APP_URL) {
+  // ── Reservar stock en Seller App ──────────────────────────────────────────
+  if (SELLER_APP_URL) {
     try {
-      const paymentRes = await fetch(`${PAYMENTS_APP_URL}/api/payments`, {
+      const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${PAYMENTS_SERVICE_KEY}`
+          'Authorization': `Bearer ${SELLER_SERVICE_KEY}`
         },
         body: JSON.stringify({
-          order_id: order.id,
           buyer_id: Number(buyer_id),
-          seller_id: cart.seller_id,
-          amount: total,
-          currency: 'ARS',
-          buyer_email: buyer.email
+          buyer_order_id: order.id,          // ← ahora sí tenés el id real
+          items: cart.items.map(item => ({
+            product_id: item.product_id,
+            quantity: item.cantidad
+          }))
         })
       })
 
-      if (paymentRes.ok) {
-        const paymentData = await paymentRes.json()
-        console.log('[orders] Payments response:', JSON.stringify(paymentData))
+      if (!stockRes.ok) {
+        await prisma.order.delete({ where: { id: order.id } })   // ← rollback
+        const errData = await stockRes.json().catch(() => ({}))
+        return NextResponse.json(
+          { error: errData.error ?? 'No hay stock disponible para uno o más productos' },
+          { status: 409 }
+        )
+      }
+    } catch (err) {
+      console.warn('[orders] Seller App no disponible, continuando sin reserva')
+    }
+  }
+    // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
+    await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: {
+        estado: 'checked_out',
+        seller_id: null
+      }
+    })
+
+    // ── Intentar llamar a Payments App ────────────────────────────────────────
+    if (PAYMENTS_APP_URL) {
+      try {
+        const paymentRes = await fetch(`${PAYMENTS_APP_URL}/api/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${PAYMENTS_SERVICE_KEY}`
+          },
+          body: JSON.stringify({
+            order_id: order.id,
+            buyer_id: Number(buyer_id),
+            seller_id: cart.seller_id,
+            amount: total,
+            currency: 'ARS',
+            buyer_email: buyer.email
+          })
+        })
+
+        if (paymentRes.ok) {
+          const paymentData = await paymentRes.json()
+          console.log('[orders] Payments response:', JSON.stringify(paymentData))
 
         if (paymentData.status === 'approved' && paymentData.payment_id) {
           await prisma.order.update({
