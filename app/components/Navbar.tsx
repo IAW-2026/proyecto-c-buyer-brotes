@@ -14,6 +14,8 @@ export default async function Navbar() {
     await cancelarOrdenesCaducadas(buyer.id)
   }
 
+  const paymentsUrl = process.env.PAYMENTS_APP_URL
+
   return (
     <nav className="flex items-center justify-between px-8 py-4" style={{ backgroundColor: '#4a6535' }}>
       <Link href="/">
@@ -25,6 +27,18 @@ export default async function Navbar() {
       </Link>
 
       <div className="flex items-center gap-4">
+        {paymentsUrl && (
+          <Link
+            href={paymentsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:brightness-90"
+            style={{ backgroundColor: '#EAF3E6', color: '#4C6B3D' }}
+          >
+            Ver pagos
+          </Link>
+        )}
+
         {esAdmin && (
           <Link
             href="/admin"

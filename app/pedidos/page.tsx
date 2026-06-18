@@ -1,10 +1,8 @@
 import { prisma } from '../lib/prisma'
 import { getBuyerFromClerk } from '../lib/auth'
-import { vendedores } from '../lib/mock-data'
+import { getVendedores } from '../lib/api'
 import Link from 'next/link'
 import PedidosClient from './PedidosClient'
-
-
 
 export default async function PedidosPage() {
   const buyer = await getBuyerFromClerk()
@@ -17,13 +15,17 @@ export default async function PedidosPage() {
     )
   }
 
-  const orders = await prisma.order.findMany({
-    where: { buyer_id: buyer.id },
-    include: { items: true },
-    orderBy: { created_at: 'desc' },
-  })
-/*La serialización convierte los Decimal de Prisma a Number y los Date a strings ISO,
-  porque los server components no pueden pasar tipos complejos directamente a client components.*/
+  const [orders, vendedores] = await Promise.all([
+    prisma.order.findMany({
+      where: { buyer_id: buyer.id },
+      include: { items: true },
+      orderBy: { created_at: 'desc' },
+    }),
+    getVendedores()
+  ])
+
+  /* La serialización convierte los Decimal de Prisma a Number y los Date a strings ISO,
+     porque los server components no pueden pasar tipos complejos directamente a client components. */
   const ordersSerializadas = orders.map(order => {
     const seller = vendedores.find(v => v.id === order.seller_id)
     return {
