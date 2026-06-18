@@ -6,14 +6,19 @@ type Props = {
 }
 
 export async function POST(request: NextRequest, { params }: Props) {
+  console.log('[payment-confirm] POST recibido')
+
   const apiKey = request.headers.get('authorization')?.replace('Bearer ', '')
   if (apiKey !== process.env.BUYER_SERVICE_API_KEY) {
+    console.warn('[payment-confirm] API key inválida')
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
   const { id: payment_id } = await params
   const body = await request.json()
   const { buyer_id } = body
+
+  console.log('[payment-confirm] payment_id:', payment_id, '| buyer_id:', buyer_id)
 
   const order = await prisma.order.findFirst({
     where: {
@@ -23,8 +28,11 @@ export async function POST(request: NextRequest, { params }: Props) {
   })
 
   if (!order) {
+    console.warn('[payment-confirm] No se encontró orden pendiente para buyer_id:', buyer_id)
     return NextResponse.json({ error: 'Orden pendiente no encontrada' }, { status: 404 })
   }
+
+  console.log('[payment-confirm] Orden encontrada:', order.id, '| actualizando a confirmada...')
 
   await prisma.order.update({
     where: { id: order.id },
@@ -34,9 +42,8 @@ export async function POST(request: NextRequest, { params }: Props) {
     }
   })
 
-  return NextResponse.json({
-    acknowledged: true,
-    payment_id,
-    buyer_id
-  }, { status: 201 })
+  const responseBody = { acknowledged: true, payment_id, buyer_id }
+  console.log('[payment-confirm] Respuesta:', JSON.stringify(responseBody))
+
+  return NextResponse.json(responseBody, { status: 201 })
 }
