@@ -16,7 +16,6 @@ import { vendedores as mockVendedores, Vendedor, Producto } from './mock-data'
 const SELLER_APP_URL   = process.env.SELLER_APP_URL
 const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
 
-// Cada app tiene su propia API key
 const SELLER_API_KEY   = process.env.SELLER_SERVICE_API_KEY
 const PAYMENTS_API_KEY = process.env.PAYMENTS_SERVICE_API_KEY
 
@@ -76,7 +75,6 @@ export async function getVendedores(): Promise<Vendedor[]> {
     }
 
     const data = await res.json()
-    console.log('[api] Raw sellers response:', JSON.stringify(data).slice(0, 500))
     const sellers: any[] = data.sellers ?? data
 
     const vendedores = await Promise.all(
@@ -143,15 +141,9 @@ async function getProductosPorVendedor(sellerId: number): Promise<Producto[]> {
     }
 
     const data = await res.json()
-    console.log(`[api] Raw productos seller ${sellerId}:`, JSON.stringify(data).slice(0, 500))
     const productos: any[] = data.data ?? data
 
-    // Filtro defensivo: la Seller App no filtra correctamente por seller_id
-    // por lo que filtramos del lado del cliente hasta que se corrija
-    const productosFiltrados = productos.filter((p: any) => p.seller_id === sellerId)
-    console.log(`[api] Productos filtrados para seller ${sellerId}: ${productosFiltrados.length} de ${productos.length}`)
-
-    return productosFiltrados.map(mapProducto)
+    return productos.map(mapProducto)
   } catch (err) {
     console.error('[api] Error en getProductosPorVendedor:', err)
     return mockVendedores.find(v => v.id === sellerId)?.productos ?? []
