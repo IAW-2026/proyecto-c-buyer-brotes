@@ -7,6 +7,7 @@ const SELLER_APP_URL = process.env.SELLER_APP_URL
 const SELLER_SERVICE_KEY = process.env.SELLER_SERVICE_API_KEY
 const PAYMENTS_SERVICE_KEY = process.env.PAYMENTS_SERVICE_API_KEY
 const SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getProductName(product_id: number): string | null {
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-    // ── Calcular total y preparar items con snapshot ──────────────────────────
+  // ── Calcular total y preparar items con snapshot ──────────────────────────
   const total = cart.items.reduce(
     (sum, item) => sum + Number(item.precio_unitario) * item.cantidad,
     0
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           buyer_id: Number(buyer_id),
-          buyer_order_id: order.id,          // ← ahora sí tenés el id real
+          buyer_order_id: String(order.id),  // ← convertido a string
           items: cart.items.map(item => ({
             product_id: item.product_id,
             quantity: item.cantidad
@@ -153,7 +154,10 @@ export async function POST(request: NextRequest) {
       })
 
       if (!stockRes.ok) {
-        await prisma.order.delete({ where: { id: order.id } })   // ← rollback
+        // Rollback: borrar items primero por la FK, luego la orden
+        await prisma.orderItem.deleteMany({ where: { order_id: order.id } })
+        await prisma.order.delete({ where: { id: order.id } })
+
         const errData = await stockRes.json().catch(() => ({}))
         return NextResponse.json(
           { error: errData.error ?? 'No hay stock disponible para uno o más productos' },
@@ -164,38 +168,39 @@ export async function POST(request: NextRequest) {
       console.warn('[orders] Seller App no disponible, continuando sin reserva')
     }
   }
-    // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
-    await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
-    await prisma.cart.update({
-      where: { id: cart.id },
-      data: {
-        estado: 'checked_out',
-        seller_id: null
-      }
-    })
 
-    // ── Intentar llamar a Payments App ────────────────────────────────────────
-    if (PAYMENTS_APP_URL) {
-      try {
-        const paymentRes = await fetch(`${PAYMENTS_APP_URL}/api/payments`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${PAYMENTS_SERVICE_KEY}`
-          },
-          body: JSON.stringify({
-            order_id: order.id,
-            buyer_id: Number(buyer_id),
-            seller_id: cart.seller_id,
-            amount: total,
-            currency: 'ARS',
-            buyer_email: buyer.email
-          })
+  // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
+  await prisma.cartItem.deleteMany({ where: { cart_id: cart.id } })
+  await prisma.cart.update({
+    where: { id: cart.id },
+    data: {
+      estado: 'checked_out',
+      seller_id: null
+    }
+  })
+
+  // ── Intentar llamar a Payments App ────────────────────────────────────────
+  if (PAYMENTS_APP_URL) {
+    try {
+      const paymentRes = await fetch(`${PAYMENTS_APP_URL}/api/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${PAYMENTS_SERVICE_KEY}`
+        },
+        body: JSON.stringify({
+          order_id: order.id,
+          buyer_id: Number(buyer_id),
+          seller_id: cart.seller_id,
+          amount: total,
+          currency: 'ARS',
+          buyer_email: buyer.email
         })
+      })
 
-        if (paymentRes.ok) {
-          const paymentData = await paymentRes.json()
-          console.log('[orders] Payments response:', JSON.stringify(paymentData))
+      if (paymentRes.ok) {
+        const paymentData = await paymentRes.json()
+        console.log('[orders] Payments response:', JSON.stringify(paymentData))
 
         if (paymentData.status === 'approved' && paymentData.payment_id) {
           await prisma.order.update({
