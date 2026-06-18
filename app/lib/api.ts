@@ -143,10 +143,15 @@ async function getProductosPorVendedor(sellerId: number): Promise<Producto[]> {
     }
 
     const data = await res.json()
-    console.log('[api] Raw productos seller', sellerId, ':', JSON.stringify(data).slice(0, 500))
+    console.log(`[api] Raw productos seller ${sellerId}:`, JSON.stringify(data).slice(0, 500))
     const productos: any[] = data.data ?? data
 
-    return productos.map(mapProducto)
+    // Filtro defensivo: la Seller App no filtra correctamente por seller_id
+    // por lo que filtramos del lado del cliente hasta que se corrija
+    const productosFiltrados = productos.filter((p: any) => p.seller_id === sellerId)
+    console.log(`[api] Productos filtrados para seller ${sellerId}: ${productosFiltrados.length} de ${productos.length}`)
+
+    return productosFiltrados.map(mapProducto)
   } catch (err) {
     console.error('[api] Error en getProductosPorVendedor:', err)
     return mockVendedores.find(v => v.id === sellerId)?.productos ?? []
