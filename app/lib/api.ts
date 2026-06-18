@@ -76,6 +76,7 @@ export async function getVendedores(): Promise<Vendedor[]> {
     }
 
     const data = await res.json()
+    console.log('[api] Raw sellers response:', JSON.stringify(data).slice(0, 500))
     const sellers: any[] = data.sellers ?? data
 
     const vendedores = await Promise.all(
@@ -142,6 +143,7 @@ async function getProductosPorVendedor(sellerId: number): Promise<Producto[]> {
     }
 
     const data = await res.json()
+    console.log('[api] Raw productos seller', sellerId, ':', JSON.stringify(data).slice(0, 500))
     const productos: any[] = data.data ?? data
 
     return productos.map(mapProducto)
