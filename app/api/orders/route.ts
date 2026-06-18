@@ -134,8 +134,23 @@ export async function POST(request: NextRequest) {
     include: { items: true }
   })
 
+  console.log('[orders] Orden creada:', order.id)
+
   // ── Reservar stock en Seller App ──────────────────────────────────────────
   if (SELLER_APP_URL) {
+    const stockPayload = {
+      buyer_id: Number(buyer_id),
+      buyer_order_id: String(order.id),
+      items: cart.items.map(item => ({
+        product_id: item.product_id,
+        quantity: item.cantidad
+      }))
+    }
+
+    console.log('[orders][stock] URL:', `${SELLER_APP_URL}/api/stock-reservations`)
+    console.log('[orders][stock] Payload:', JSON.stringify(stockPayload))
+    console.log('[orders][stock] SELLER_SERVICE_KEY existe?:', !!SELLER_SERVICE_KEY)
+
     try {
       const stockRes = await fetch(`${SELLER_APP_URL}/api/stock-reservations`, {
         method: 'POST',
@@ -143,30 +158,39 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${SELLER_SERVICE_KEY}`
         },
-        body: JSON.stringify({
-          buyer_id: Number(buyer_id),
-          buyer_order_id: String(order.id),  // ← convertido a string
-          items: cart.items.map(item => ({
-            product_id: item.product_id,
-            quantity: item.cantidad
-          }))
-        })
+        body: JSON.stringify(stockPayload)
       })
 
+      console.log('[orders][stock] Status:', stockRes.status)
+      console.log('[orders][stock] Headers:', JSON.stringify(Object.fromEntries(stockRes.headers.entries())))
+
       if (!stockRes.ok) {
+        const rawText = await stockRes.text()
+        console.error('[orders][stock] Body crudo:', rawText)
+
         // Rollback: borrar items primero por la FK, luego la orden
         await prisma.orderItem.deleteMany({ where: { order_id: order.id } })
         await prisma.order.delete({ where: { id: order.id } })
+        console.log('[orders][stock] Rollback ejecutado para orden:', order.id)
 
-        const errData = await stockRes.json().catch(() => ({}))
+        let errData: any = {}
+        try { errData = JSON.parse(rawText) } catch { /* no era JSON */ }
+
         return NextResponse.json(
           { error: errData.error ?? 'No hay stock disponible para uno o más productos' },
           { status: 409 }
         )
       }
+
+      const stockData = await stockRes.json()
+      console.log('[orders][stock] Respuesta OK:', JSON.stringify(stockData))
+
     } catch (err) {
       console.warn('[orders] Seller App no disponible, continuando sin reserva')
+      console.error('[orders][stock] Excepción:', err)
     }
+  } else {
+    console.warn('[orders] SELLER_APP_URL no configurada, se omite la reserva de stock')
   }
 
   // ── Limpiar el carrito: borrar items y marcarlo como checked_out ──────────
@@ -178,6 +202,8 @@ export async function POST(request: NextRequest) {
       seller_id: null
     }
   })
+
+  console.log('[orders] Carrito limpiado:', cart.id)
 
   // ── Intentar llamar a Payments App ────────────────────────────────────────
   if (PAYMENTS_APP_URL) {
