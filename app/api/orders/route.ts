@@ -4,8 +4,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const PAYMENTS_APP_URL = process.env.PAYMENTS_APP_URL
 const SELLER_APP_URL = process.env.SELLER_APP_URL
+const SELLER_SERVICE_KEY = process.env.SELLER_SERVICE_API_KEY
+const PAYMENTS_SERVICE_KEY = process.env.PAYMENTS_SERVICE_API_KEY
 const SERVICE_API_KEY = process.env.BUYER_SERVICE_API_KEY
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getProductName(product_id: number): string | null {
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SERVICE_API_KEY}`
+          'Authorization': `Bearer ${SELLER_SERVICE_KEY}`
         },
         body: JSON.stringify({
           buyer_id: Number(buyer_id),
@@ -212,7 +213,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SERVICE_API_KEY}`
+          'Authorization': `Bearer ${PAYMENTS_SERVICE_KEY}`
         },
         body: JSON.stringify({
           order_id: order.id,
