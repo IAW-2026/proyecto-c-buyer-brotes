@@ -8,10 +8,29 @@ let _favIdx = 0
 let _threadIdx = 0
 let _replyIdx = 0
 let _likeIdx = 0
+let _oldBuyerIdx = 0
+let _oldOrderIdx = 0
+
+function oldBuyerDate(): Date {
+  const d = new Date('2025-02-01T08:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_oldBuyerIdx * 45))
+  d.setHours(8 + (_oldBuyerIdx % 6))
+  _oldBuyerIdx++
+  return d
+}
+
+function oldOrderDate(): Date {
+  const d = new Date('2025-06-01T10:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_oldOrderIdx * 10))
+  d.setHours(10 + (_oldOrderIdx % 8))
+  _oldOrderIdx++
+  return d
+}
 
 function buyerDate(): Date {
-  const d = new Date('2026-04-01T08:00:00.000Z')
-  d.setDate(d.getDate() + Math.floor(_buyerIdx * 2))
+  const offsets = [6, 8, 9, 10, 13, 15, 18, 20, 24, 27, 29, 32, 38, 41, 43, 46, 48, 52, 53, 54]
+  const d = new Date('2026-05-01T08:00:00.000Z')
+  d.setDate(d.getDate() + offsets[_buyerIdx])
   d.setHours(8 + (_buyerIdx % 6))
   _buyerIdx++
   return d
@@ -296,7 +315,315 @@ async function main() {
     }
   })
 
-  console.log('👤 20 Buyers creados')
+  const buyer21 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_021', nombre: 'Facundo Molina', email: 'facundo@brotes.com', direccion: 'Belgrano 1200, Salta', estado: 'activo', created_at: oldBuyerDate()
+    }
+  })
+  const buyer22 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_022', nombre: 'Emilia Rivas', email: 'emilia@brotes.com', direccion: '9 de Julio 500, Jujuy', estado: 'activo', created_at: oldBuyerDate()
+    }
+  })
+  const buyer23 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_023', nombre: 'Benjamín Soto', email: 'benjamin@brotes.com', direccion: 'Alvear 800, La Plata', estado: 'activo', created_at: oldBuyerDate()
+    }
+  })
+  const buyer24 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_024', nombre: 'Victoria Paz', email: 'victoria@brotes.com', direccion: 'Maipú 2500, Neuquén', estado: 'suspendido', created_at: oldBuyerDate()
+    }
+  })
+  const buyer25 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_025', nombre: 'Santiago Luna', email: 'santiago@brotes.com', direccion: 'San Lorenzo 1800, Formosa', estado: 'activo', created_at: oldBuyerDate()
+    }
+  })
+  const buyer26 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_026', nombre: 'Catalina Méndez', email: 'catalina@brotes.com', direccion: 'Buenos Aires 650, Santiago del Estero', estado: 'eliminado', created_at: oldBuyerDate(), deleted_at: new Date('2026-05-01T12:00:00Z'), delete_reason: 'Solicitud propia'
+    }
+  })
+  const buyer27 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_027', nombre: 'Maximiliano Campos', email: 'maximiliano@brotes.com', direccion: 'Entre Ríos 300, La Rioja', estado: 'activo', created_at: oldBuyerDate()
+    }
+  })
+  const buyer28 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_028', nombre: 'Antonella Roldán', email: 'antonella@brotes.com', direccion: 'Córdoba 750, San Luis', estado: 'activo', created_at: oldBuyerDate()
+    }
+  })
+  const buyer29 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_029', nombre: 'Joaquín Farías', email: 'joaquin@brotes.com', direccion: 'Moreno 400, Catamarca', estado: 'suspendido', created_at: oldBuyerDate()
+    }
+  })
+  const buyer30 = await prisma.buyer.create({
+    data: {
+      clerk_user_id: 'seed_buyer_030', nombre: 'Valeria Núñez', email: 'valeria@brotes.com', direccion: 'Rivadavia 920, Chubut', estado: 'activo', created_at: oldBuyerDate()
+    }
+  })
+
+  console.log('👤 30 Buyers creados')
+
+  // ── Órdenes antiguas (buyers 21-30, antes de mayo 2026) ────────────────
+
+  // buyer21 — 3 órdenes
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer21.id, seller_id: 1, total: 32000, estado: 'entregada', payment_id: 2001, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 1, product_name_snapshot: 'Monstera Deliciosa',  unit_price_snapshot: 28000, cantidad: 1 },
+        { product_id: 2, product_name_snapshot: 'Pilea Peperomioides', unit_price_snapshot: 4000,  cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer21.id, seller_id: 5, total: 13000, estado: 'entregada', payment_id: 2002, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 57, product_name_snapshot: 'Frutilla',  unit_price_snapshot: 5000, cantidad: 1 },
+        { product_id: 55, product_name_snapshot: 'Pimiento',  unit_price_snapshot: 4000, cantidad: 1 },
+        { product_id: 56, product_name_snapshot: 'Berenjena', unit_price_snapshot: 4000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer21.id, seller_id: 8, total: 75000, estado: 'entregada', payment_id: 2003, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 88, product_name_snapshot: 'Bonsai Ficus', unit_price_snapshot: 75000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer22 — 3 órdenes
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer22.id, seller_id: 3, total: 27000, estado: 'entregada', payment_id: 2004, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 30, product_name_snapshot: 'Aloe Vera',      unit_price_snapshot: 9000, cantidad: 1 },
+        { product_id: 29, product_name_snapshot: 'Echeveria Rosa',  unit_price_snapshot: 5000, cantidad: 2 },
+        { product_id: 34, product_name_snapshot: 'Crassula Ovata',  unit_price_snapshot: 7000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer22.id, seller_id: 11, total: 90000, estado: 'entregada', payment_id: 2005, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 121, product_name_snapshot: 'Orquídea Phalaenopsis', unit_price_snapshot: 35000, cantidad: 1 },
+        { product_id: 122, product_name_snapshot: 'Orquídea Cattleya',     unit_price_snapshot: 55000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer22.id, seller_id: 14, total: 12500, estado: 'entregada', payment_id: 2006, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 154, product_name_snapshot: 'Menta Peperita', unit_price_snapshot: 4500, cantidad: 1 },
+        { product_id: 163, product_name_snapshot: 'Lavanda Angustifolia', unit_price_snapshot: 8000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer23 — 3 órdenes
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer23.id, seller_id: 6, total: 55000, estado: 'entregada', payment_id: 2007, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 63, product_name_snapshot: 'Palmera Areca', unit_price_snapshot: 55000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer23.id, seller_id: 17, total: 28000, estado: 'entregada', payment_id: 2008, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 187, product_name_snapshot: 'Helecho Cuerno de Alce', unit_price_snapshot: 28000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer23.id, seller_id: 2, total: 18500, estado: 'confirmada', payment_id: 2009, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 13, product_name_snapshot: 'Lavanda', unit_price_snapshot: 8000, cantidad: 1 },
+        { product_id: 14, product_name_snapshot: 'Romero',  unit_price_snapshot: 6000, cantidad: 1 },
+        { product_id: 17, product_name_snapshot: 'Tomillo', unit_price_snapshot: 4500, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer24 — 2 órdenes (suspendido)
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer24.id, seller_id: 9, total: 57000, estado: 'entregada', payment_id: 2010, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 98,  product_name_snapshot: 'Loto Sagrado', unit_price_snapshot: 32000, cantidad: 1 },
+        { product_id: 100, product_name_snapshot: 'Kit Terrario', unit_price_snapshot: 25000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer24.id, seller_id: 4, total: 85000, estado: 'caducada', created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 40, product_name_snapshot: 'Philodendron Pink Princess', unit_price_snapshot: 85000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer25 — 3 órdenes
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer25.id, seller_id: 7, total: 65000, estado: 'entregada', payment_id: 2011, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 75, product_name_snapshot: 'Rosa Roja',  unit_price_snapshot: 15000, cantidad: 1 },
+        { product_id: 76, product_name_snapshot: 'Hortensia',  unit_price_snapshot: 22000, cantidad: 1 },
+        { product_id: 79, product_name_snapshot: 'Camellia',   unit_price_snapshot: 28000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer25.id, seller_id: 13, total: 45000, estado: 'entregada', payment_id: 2012, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 143, product_name_snapshot: 'Ficus Lyrata', unit_price_snapshot: 45000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer25.id, seller_id: 16, total: 73000, estado: 'confirmada', payment_id: 2013, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 177, product_name_snapshot: 'Olivo en Maceta',      unit_price_snapshot: 65000, cantidad: 1 },
+        { product_id: 178, product_name_snapshot: 'Lavanda Angustifolia', unit_price_snapshot: 8000,  cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer26 — 1 orden (eliminado)
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer26.id, seller_id: 12, total: 30000, estado: 'caducada', created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 132, product_name_snapshot: 'Notro',    unit_price_snapshot: 18000, cantidad: 1 },
+        { product_id: 133, product_name_snapshot: 'Calafate', unit_price_snapshot: 12000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer27 — 3 órdenes
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer27.id, seller_id: 19, total: 33000, estado: 'entregada', payment_id: 2014, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 216, product_name_snapshot: 'String of Pearls', unit_price_snapshot: 15000, cantidad: 1 },
+        { product_id: 217, product_name_snapshot: 'Hoya Carnosa',     unit_price_snapshot: 18000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer27.id, seller_id: 20, total: 90000, estado: 'entregada', payment_id: 2015, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 224, product_name_snapshot: 'Strelitzia Nicolai', unit_price_snapshot: 55000, cantidad: 1 },
+        { product_id: 226, product_name_snapshot: 'Frangipanier',       unit_price_snapshot: 35000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer27.id, seller_id: 10, total: 20000, estado: 'entregada', payment_id: 2016, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 109, product_name_snapshot: 'Mix Semillas Orgánicas',  unit_price_snapshot: 5000, cantidad: 1 },
+        { product_id: 111, product_name_snapshot: 'Tierra Orgánica Premium', unit_price_snapshot: 8000, cantidad: 1 },
+        { product_id: 117, product_name_snapshot: 'Humus de Lombriz',        unit_price_snapshot: 7000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer28 — 3 órdenes
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer28.id, seller_id: 18, total: 60000, estado: 'entregada', payment_id: 2017, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 199, product_name_snapshot: 'Cactus Totem',  unit_price_snapshot: 35000, cantidad: 1 },
+        { product_id: 201, product_name_snapshot: 'Cactus Cereus', unit_price_snapshot: 25000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer28.id, seller_id: 15, total: 27000, estado: 'entregada', payment_id: 2018, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 167, product_name_snapshot: 'Pack Suculentas x3',    unit_price_snapshot: 9000,  cantidad: 1 },
+        { product_id: 175, product_name_snapshot: 'Pack Regalo Suculentas', unit_price_snapshot: 18000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer28.id, seller_id: 4, total: 120000, estado: 'confirmada', payment_id: 2019, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 39, product_name_snapshot: 'Monstera Thai Constellation', unit_price_snapshot: 120000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer29 — 2 órdenes (suspendido)
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer29.id, seller_id: 2, total: 11000, estado: 'caducada', created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 21, product_name_snapshot: 'Menta',    unit_price_snapshot: 4000, cantidad: 1 },
+        { product_id: 22, product_name_snapshot: 'Albahaca', unit_price_snapshot: 3500, cantidad: 1 },
+        { product_id: 23, product_name_snapshot: 'Perejil',  unit_price_snapshot: 3000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer29.id, seller_id: 3, total: 14000, estado: 'caducada', created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 32, product_name_snapshot: 'Gymnocalycium', unit_price_snapshot: 8000, cantidad: 1 },
+        { product_id: 31, product_name_snapshot: 'Sedum Burro',   unit_price_snapshot: 6000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  // buyer30 — 3 órdenes
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer30.id, seller_id: 17, total: 46000, estado: 'entregada', payment_id: 2020, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 187, product_name_snapshot: 'Helecho Cuerno de Alce', unit_price_snapshot: 28000, cantidad: 1 },
+        { product_id: 190, product_name_snapshot: 'Helecho Nido de Pájaro', unit_price_snapshot: 18000, cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer30.id, seller_id: 5, total: 25000, estado: 'entregada', payment_id: 2021, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 49, product_name_snapshot: 'Kit Huerta Inicial', unit_price_snapshot: 18000, cantidad: 1 },
+        { product_id: 50, product_name_snapshot: 'Tomate Cherry',      unit_price_snapshot: 7000,  cantidad: 1 }
+      ]}
+    }
+  })
+  await prisma.order.create({
+    data: {
+      buyer_id: buyer30.id, seller_id: 6, total: 75000, estado: 'confirmada', payment_id: 2022, created_at: oldOrderDate(),
+      items: { create: [
+        { product_id: 69, product_name_snapshot: 'Palmera Kentia', unit_price_snapshot: 75000, cantidad: 1 }
+      ]}
+    }
+  })
+
+  console.log('📦 30 órdenes antiguas (buyers 21-30, antes de mayo 2026)')
 
   // ── Órdenes ──────────────────────────────────────────────────────────────
 
@@ -848,7 +1175,7 @@ async function main() {
     }
   })
 
-  console.log('📦 60 órdenes creadas con fechas distribuidas')
+  console.log('📦 ' + await prisma.order.count() + ' órdenes creadas con fechas distribuidas')
 
   // ── Carrito activo para buyer1 ──
   await prisma.cart.create({
@@ -1207,11 +1534,21 @@ async function main() {
   console.log('   agustina@brotes.com     → compradora activa (3 órdenes)')
   console.log('   leandro@brotes.com      → comprador activo (3 órdenes)')
   console.log('   julieta@brotes.com      → compradora activa (3 órdenes)')
+  console.log('   facundo@brotes.com      → comprador histórico (3 órdenes, 2025)')
+  console.log('   emilia@brotes.com       → compradora histórica (3 órdenes, 2025)')
+  console.log('   benjamin@brotes.com     → comprador histórico (3 órdenes, 2025)')
+  console.log('   victoria@brotes.com     → cuenta suspendida (2 órdenes)')
+  console.log('   santiago@brotes.com     → comprador histórico (3 órdenes, 2025)')
+  console.log('   catalina@brotes.com     → cuenta eliminada (1 orden)')
+  console.log('   maximiliano@brotes.com  → comprador histórico (3 órdenes, 2025)')
+  console.log('   antonella@brotes.com    → compradora histórica (3 órdenes, 2025)')
+  console.log('   joaquin@brotes.com      → cuenta suspendida (2 órdenes)')
+  console.log('   valeria@brotes.com      → compradora histórica (3 órdenes, 2025)')
   console.log('')
   console.log('💬 Foro:')
   console.log('   10 hilos de debate con 33 respuestas y 44 likes entre usuarios')
   console.log('')
-  console.log('📊 Fechas distribuidas desde marzo 2026 hasta junio 2026')
+  console.log('📊 Fechas distribuidas desde febrero 2025 hasta junio 2026')
 }
 
 main()
