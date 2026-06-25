@@ -8,13 +8,7 @@ const isPublicRoute = createRouteMatcher([
   '/foro(.*)',
   '/sign-in(.*)',        
   '/sign-up(.*)',
-  '/api/weather',
-  '/api/plantas/consejos',
-  '/api/forum/threads',
-  '/api/forum/threads/(.*)',
-  '/api/approved-payment/(.*)',
-  '/api/rejected-payment/(.*)',
-  '/api/orders/(.*)/status-update',  
+  '/api/(.*)',  
 ])
 
 export default clerkMiddleware(async (auth, request) => {
