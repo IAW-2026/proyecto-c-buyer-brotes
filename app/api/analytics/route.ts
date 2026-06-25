@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     prisma.buyer.count({ where: { estado: "suspendido" } }),
     prisma.buyer.count({ where: { estado: "eliminado" } }),
     prisma.buyer.findMany({
-      where: { created_at: { gte: new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000) } },
+      where: { created_at: { gte: new Date(Date.now() - 7 * 7 * 24 * 60 * 60 * 1000) } },
       select: { created_at: true },
       orderBy: { created_at: "asc" },
     }),
@@ -83,12 +83,12 @@ export async function GET(request: NextRequest) {
       },
     }),
     prisma.forumThread.findMany({
-      where: { created_at: { gte: new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000) } },
+      where: { created_at: { gte: new Date(Date.now() - 7 * 7 * 24 * 60 * 60 * 1000) } },
       select: { created_at: true },
       orderBy: { created_at: "asc" },
     }),
     prisma.forumReply.findMany({
-      where: { created_at: { gte: new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000) } },
+      where: { created_at: { gte: new Date(Date.now() - 7 * 7 * 24 * 60 * 60 * 1000) } },
       select: { created_at: true },
       orderBy: { created_at: "asc" },
     }),

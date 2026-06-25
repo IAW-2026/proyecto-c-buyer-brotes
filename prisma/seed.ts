@@ -2,48 +2,57 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+let _buyerIdx = 0
 let _orderIdx = 0
 let _favIdx = 0
 let _threadIdx = 0
 let _replyIdx = 0
 let _likeIdx = 0
 
+function buyerDate(): Date {
+  const d = new Date('2026-04-01T08:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_buyerIdx * 2))
+  d.setHours(8 + (_buyerIdx % 6))
+  _buyerIdx++
+  return d
+}
+
 function orderDate(): Date {
-  const d = new Date('2025-12-01T10:00:00.000Z')
-  d.setDate(d.getDate() + Math.floor(_orderIdx * 3))
-  d.setHours(d.getHours() + (_orderIdx % 8))
+  const d = new Date('2026-03-15T10:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_orderIdx * 1.5))
+  d.setHours(10 + (_orderIdx % 10))
   _orderIdx++
   return d
 }
 
 function favoriteDate(): Date {
-  const d = new Date('2025-12-02T12:00:00.000Z')
-  d.setDate(d.getDate() + Math.floor(_favIdx * 5))
-  d.setHours(d.getHours() + (_favIdx % 6))
+  const d = new Date('2026-03-20T12:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_favIdx * 2.5))
+  d.setHours(12 + (_favIdx % 6))
   _favIdx++
   return d
 }
 
 function threadDate(): Date {
-  const d = new Date('2025-12-05T09:00:00.000Z')
-  d.setDate(d.getDate() + Math.floor(_threadIdx * 18))
-  d.setHours(d.getHours() + (_threadIdx % 4))
+  const d = new Date('2026-03-15T09:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_threadIdx * 9))
+  d.setHours(9 + (_threadIdx % 4))
   _threadIdx++
   return d
 }
 
 function replyDate(): Date {
-  const d = new Date('2025-12-06T15:00:00.000Z')
-  d.setDate(d.getDate() + Math.floor(_replyIdx * 6))
-  d.setHours(d.getHours() + (_replyIdx % 5))
+  const d = new Date('2026-03-20T15:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_replyIdx * 3))
+  d.setHours(15 + (_replyIdx % 5))
   _replyIdx++
   return d
 }
 
 function likeDate(): Date {
-  const d = new Date('2025-12-08T20:00:00.000Z')
-  d.setDate(d.getDate() + Math.floor(_likeIdx * 3))
-  d.setHours(d.getHours() + (_likeIdx % 4))
+  const d = new Date('2026-03-25T20:00:00.000Z')
+  d.setDate(d.getDate() + Math.floor(_likeIdx * 2))
+  d.setHours(20 + (_likeIdx % 4))
   _likeIdx++
   return d
 }
@@ -71,7 +80,8 @@ async function main() {
       nombre: 'María González',
       email: 'buyer@brotes.com',
       direccion: 'Av. Corrientes 1234, Buenos Aires',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -81,7 +91,8 @@ async function main() {
       nombre: 'Carlos Rodríguez',
       email: 'ambos@brotes.com',
       direccion: 'San Martín 567, Córdoba',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -91,7 +102,8 @@ async function main() {
       nombre: 'Laura Martínez',
       email: 'suspendido@brotes.com',
       direccion: 'Belgrano 890, Rosario',
-      estado: 'suspendido'
+      estado: 'suspendido',
+      created_at: buyerDate()
     }
   })
 
@@ -101,7 +113,8 @@ async function main() {
       nombre: 'Admin Sistema',
       email: 'admin@brotes.com',
       direccion: '',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -112,6 +125,7 @@ async function main() {
       email: 'eliminado@brotes.com',
       direccion: 'Florida 321, Buenos Aires',
       estado: 'eliminado',
+      created_at: buyerDate(),
       deleted_at: new Date(),
       delete_reason: 'Violación de términos y condiciones del marketplace'
     }
@@ -123,7 +137,8 @@ async function main() {
       nombre: 'Valentina Torres',
       email: 'valentina@brotes.com',
       direccion: 'Rivadavia 450, Mendoza',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -133,7 +148,8 @@ async function main() {
       nombre: 'Ignacio Pereyra',
       email: 'ignacio@brotes.com',
       direccion: 'Mitre 88, Tucumán',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -143,7 +159,8 @@ async function main() {
       nombre: 'Sofía Herrera',
       email: 'sofia@brotes.com',
       direccion: 'Las Heras 2200, Santa Fe',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -153,7 +170,8 @@ async function main() {
       nombre: 'Matías Fernández',
       email: 'matias@brotes.com',
       direccion: 'Urquiza 310, Corrientes',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -163,7 +181,8 @@ async function main() {
       nombre: 'Lucía Ramírez',
       email: 'lucia@brotes.com',
       direccion: 'Sarmiento 900, Bariloche',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -173,7 +192,8 @@ async function main() {
       nombre: 'Tomás Aguirre',
       email: 'tomas@brotes.com',
       direccion: 'Av. San Juan 1500, Buenos Aires',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -183,7 +203,8 @@ async function main() {
       nombre: 'Camila Vega',
       email: 'camila@brotes.com',
       direccion: 'Lavalle 780, Rosario',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -193,7 +214,8 @@ async function main() {
       nombre: 'Nicolás Blanco',
       email: 'nicolas@brotes.com',
       direccion: 'Chacabuco 200, Córdoba',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -203,7 +225,8 @@ async function main() {
       nombre: 'Martina López',
       email: 'martina@brotes.com',
       direccion: 'Independencia 3300, Mendoza',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -213,7 +236,8 @@ async function main() {
       nombre: 'Ezequiel Mora',
       email: 'ezequiel@brotes.com',
       direccion: 'Pellegrini 600, Bach',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -223,7 +247,8 @@ async function main() {
       nombre: 'Florencia Castillo',
       email: 'florencia@brotes.com',
       direccion: 'Brown 1100, Mar del Plata',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -233,7 +258,8 @@ async function main() {
       nombre: 'Rodrigo Ibáñez',
       email: 'rodrigo@brotes.com',
       direccion: 'Colón 450, San Juan',
-      estado: 'suspendido'
+      estado: 'suspendido',
+      created_at: buyerDate()
     }
   })
 
@@ -243,7 +269,8 @@ async function main() {
       nombre: 'Agustina Paredes',
       email: 'agustina@brotes.com',
       direccion: 'Rivadavia 2500, Entre Ríos',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -253,7 +280,8 @@ async function main() {
       nombre: 'Leandro Ríos',
       email: 'leandro@brotes.com',
       direccion: 'Moreno 890, San Luis',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -263,7 +291,8 @@ async function main() {
       nombre: 'Julieta Acosta',
       email: 'julieta@brotes.com',
       direccion: 'Libertad 340, Misiones',
-      estado: 'activo'
+      estado: 'activo',
+      created_at: buyerDate()
     }
   })
 
@@ -1182,7 +1211,7 @@ async function main() {
   console.log('💬 Foro:')
   console.log('   10 hilos de debate con 33 respuestas y 44 likes entre usuarios')
   console.log('')
-  console.log('📊 Fechas distribuidas desde diciembre 2025 hasta junio 2026')
+  console.log('📊 Fechas distribuidas desde marzo 2026 hasta junio 2026')
 }
 
 main()
