@@ -49,6 +49,18 @@ export default async function Navbar() {
           </Link>
         )}
 
+        {esAdmin && (
+          <Link
+            href="https://etapa-3-analytics-dashboard-brotes.vercel.app/dashboard/resumen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:brightness-90"
+            style={{ backgroundColor: '#EAF3E6', color: '#4C6B3D' }}
+          >
+            Analytics
+          </Link>
+        )}
+
         {buyer ? (
           <UserMenu nombre={buyer.nombre ?? 'Mi perfil'} />
         ) : (

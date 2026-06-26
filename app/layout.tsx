@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 import CarritoFlotante from './components/CarritoFlotante'
 import { ClerkProvider } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
 import { getBuyerFromClerk } from './lib/auth'
 
 export const metadata: Metadata = {
@@ -18,13 +19,17 @@ export default async function RootLayout({
 }) {
   const buyer = await getBuyerFromClerk()
 
+  const { sessionClaims } = await auth()
+  const roles = (sessionClaims?.metadata as any) ?? []
+  const esAdmin = Array.isArray(roles) ? roles.includes('admin') : roles === 'admin'
+
   return (
     <ClerkProvider>
       <html lang="es">
         <body>
           <Navbar />
           <div className="flex">
-            <Sidebar />
+            <Sidebar esAdmin={esAdmin} />
             <div className="flex-1">
               {children}
             </div>

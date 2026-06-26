@@ -1,12 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { Home, Leaf, Heart, Package, Bell, User, Zap, MessageCircle } from 'lucide-react'
+import { Home, Leaf, Heart, Package, Bell, User, Zap, MessageCircle, BarChart3 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import WeatherWidget from './WeatherWidget'
 import PanelAsistente from './PanelAsistente'
 
-export default function Sidebar() {
+export default function Sidebar({ esAdmin }: { esAdmin: boolean }) {
   const pathname = usePathname()
 
   const linkEstilo = (href: string) => ({
@@ -45,6 +45,17 @@ export default function Sidebar() {
         <Link href="/perfil" {...linkEstilo('/perfil')}>
           <User size={18} /> Perfil
         </Link>
+        {esAdmin && (
+          <Link
+            href="https://etapa-3-analytics-dashboard-brotes.vercel.app/dashboard/resumen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl"
+            style={{ color: '#4C6B3D' }}
+          >
+            <BarChart3 size={18} /> Analytics
+          </Link>
+        )}
       </div>
 
       {/* Widgets */}
